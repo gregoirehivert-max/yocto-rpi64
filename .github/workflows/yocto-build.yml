@@ -49,7 +49,7 @@ jobs:
 
         # Cloner les recettes Waydroid depuis kvfasil/waydroid
         
-        source poky/oe-init-build-env build
+        source oe-init-build-env build
         bitbake-layers create-layer ../meta-waydroid        
         git clone https://github.com/kvfasil/waydroid ../meta_waydroid/recipes-waydroid
 
@@ -66,6 +66,7 @@ jobs:
         
     - name: Configure Yocto for Raspberry Pi 4 (64-bit)
       run: |
+        source poky/oe-init-build-env build
 
         # Ajouter les layers nécessaires à bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-raspberrypi"' >> conf/bblayers.conf
