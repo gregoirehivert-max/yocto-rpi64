@@ -23,17 +23,6 @@ jobs:
           gawk wget git-core diffstat unzip texinfo gcc build-essential chrpath socat cpio python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping bzip2 \
           lxc lxc-utils curl libglib2.0-dev libwayland-client0 libsystemd-dev git pkg-config
 
-    - name: Build and install gutil from source
-      env:
-        GH_TOKEN: ${{ secrets.GH_TOKEN }}
-      run: |
-        # Télécharger et compiler gutil
-        git clone https://$GH_TOKEN@github.com/mer-hybris/gutil.git
-        cd gutil
-        make
-        sudo make install
-        sudo ldconfig
-
     - name: Build and install libgbinder from source
       run: |
         # Télécharger et compiler libgbinder
