@@ -1,5 +1,5 @@
 header:
-  version: 18
+  version: 14
 
 machine: raspberrypi4-64
 distro: poky
@@ -11,7 +11,6 @@ repos:
   poky:
     url: "https://git.yoctoproject.org/git/poky"
     branch: scarthgap
-    refspec: scarthgap
     layers:
       meta:
       meta-poky:
@@ -20,7 +19,6 @@ repos:
   meta-openembedded:
     url: "https://git.openembedded.org/meta-openembedded"
     branch: scarthgap
-    refspec: scarthgap
     layers:
       meta-oe:
       meta-python:
@@ -29,7 +27,6 @@ repos:
   meta-raspberrypi:
     url: "https://git.yoctoproject.org/git/meta-raspberrypi"
     branch: scarthgap
-    refspec: scarthgap
 
 local_conf_header:
   standard: |
