@@ -1,5 +1,5 @@
 
-name: Build Yocto RPi 64-bit
+name: Build Yocto RPi 64-bit (Ubuntu 22.04)
 
 on:
   workflow_dispatch:
@@ -67,15 +67,14 @@ jobs:
       - name: Récupérer les couches Yocto
         run: |
           set -euo pipefail
-          # poky + meta-raspberrypi + meta-openembedded (branches alignées)
           git clone --depth 1 -b "${YOCTO_BRANCH}" https://git.yoctoproject.org/poky sources/poky
           git clone --depth 1 -b "${YOCTO_BRANCH}" https://git.yoctoproject.org/meta-raspberrypi sources/meta-raspberrypi
           git clone --depth 1 -b "${YOCTO_BRANCH}" https://git.openembedded.org/meta-openembedded sources/meta-openembedded
 
-      - name: Build dans conteneur CROPS/Poky (Docker Hub)
+      - name: Build dans conteneur Ubuntu 22.04
         uses: addnab/docker-run-action@v3
         with:
-          image: crops/poky:latest
+          image: ubuntu:22.04
           options: >
             -v ${{ github.workspace }}:/work
             -e YOCTO_BRANCH=${{ env.YOCTO_BRANCH }}
@@ -85,71 +84,69 @@ jobs:
           run: |
             #! /bin/bash
             set -eo pipefail
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update
+            apt-get install -y \
+              git gawk wget diffstat unzip texinfo gcc build-essential chrpath socat cpio python3 python3-distutils python3-venv \
+              zstd xz-utils tar pkg-config
+
             cd /work
 
-            # Éviter l'erreur "BBSERVER: unbound variable" pendant le sourcing
-            set +u
-            export BBSERVER=""
-            # Initialiser l'environnement Yocto dans /work/build
-            source sources/poky/oe-init-build-env build
-            set -u
-
-            # Installer les buildtools officiels (assure python3 >= 3.8)
+            # Installer les buildtools officiels (assure toolchain cohérente)
             mkdir -p /work/.buildtools
-            scripts/install-buildtools -n -t /work/.buildtools
+            bash sources/poky/scripts/install-buildtools -n -t /work/.buildtools
 
-            # Activer buildtools
+            # Mettre buildtools EN TÊTE du PATH avant toute commande Yocto
             export PATH="/work/.buildtools/usr/bin:$PATH"
             export LD_LIBRARY_PATH="/work/.buildtools/usr/lib:/work/.buildtools/lib:${LD_LIBRARY_PATH:-}"
+            export PYTHONNOUSERSITE=1
 
-            # Vérification Python (BitBake requiert ≥ 3.8)
+            echo "which python3 => $(which python3)"
             python3 --version
-            python3 - <<'PYCHK'
-            import sys
-            assert (sys.version_info.major, sys.version_info.minor) >= (3,8), f"Python {sys.version} < 3.8"
-            print("Python OK pour BitBake:", sys.version)
-            PYCHK
 
-            # Ajouter les couches nécessaires
+            # Initialiser l'environnement Yocto
+            set +u
+            export BBSERVER=""
+            source /work/sources/poky/oe-init-build-env /work/build
+            set -u
+
+            # Ajouter les couches
             bitbake-layers add-layer /work/sources/meta-raspberrypi
             bitbake-layers add-layer /work/sources/meta-openembedded/meta-oe
             bitbake-layers add-layer /work/sources/meta-openembedded/meta-networking
             bitbake-layers add-layer /work/sources/meta-openembedded/meta-python
 
-            # Configurer local.conf : machine, types d'images, caches, parallélisme
+            # Configurer local.conf (caches, machine, image types, parallélisme)
             cat <<'EOF' >> conf/local.conf
-            # Machine et types d'images
             MACHINE ??= "${MACHINE}"
             IMAGE_FSTYPES += " ${IMAGE_FSTYPES}"
 
-            # Caches (montés en dehors de tmp pour persistance CI)
             DL_DIR ?= "/work/downloads"
             SSTATE_DIR ?= "/work/sstate-cache"
 
-            # Optionnel: système d'init
             DISTRO_FEATURES:append = " systemd"
 
-            # Parallélisme CI
             BB_NUMBER_THREADS ?= "${@oe.utils.cpu_count()}"
             PARALLEL_MAKE ?= "-j${@oe.utils.cpu_count()}"
 
-            # (Optionnel) réduire la taille en CI
             # INHERIT += "rm_work"
             EOF
 
-            # Build de l'image
+            # Sanity check: python résolu dans PATH à ce stade ?
+            echo "python3 used by bitbake: $(which python3)"
+            python3 --version
+
+            # Build
             bitbake ${IMAGE}
 
-            # Collecte des artefacts
+            # Artefacts
             OUT=/work/artifacts
             mkdir -p "$OUT"
             DEPLOY="tmp/deploy/images/${MACHINE}"
-            # Images (sdimg/wic), kernel, dtbs, bootloaders, manifs
             cp -v ${DEPLOY}/* ${OUT}/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: yocto-${{ env.MACHINE }}-${{ env.IMAGE }}-${{ env.YOCTO_BRANCH }}
+                   name: yocto-${{ env.MACHINE }}-${{ env.IMAGE }}-${{ env.YOCTO_BRANCH }}
           path: artifacts
-         
