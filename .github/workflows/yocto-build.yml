@@ -47,18 +47,13 @@ jobs:
         # Cloner meta-openembedded pour les dépendances supplémentaires
         git clone -b kirkstone git://git.openembedded.org/meta-openembedded ../meta-openembedded
 
-        # Créer un layer personnalisé
-        source oe-init-build-env build        
-        bitbake-layers create-layer ../meta-custom
-        mkdir -p ../meta-custom/recipes-waydroid
-
         # Cloner les recettes Waydroid depuis kvfasil/waydroid
-        git clone https://github.com/kvfasil/waydroid
-        cp -r waydroid/* ../meta-custom/recipes-waydroid/
+        mkdir -p ../meta_waydroid
+        git clone https://github.com/kvfasil/waydroid ../meta_waydroid/recipes-waydroid
 
         # Ajouter le fichier layer.conf dans le layer personnalisé
-        mkdir -p ../meta-custom/conf
-        cat <<EOT > ../meta-custom/conf/layer.conf
+        mkdir -p ../meta-waydroid/conf
+        cat <<EOT > ../meta-waydroid/conf/layer.conf
         # Layer configuration for meta-custom
         BBPATH .= ":${LAYERDIR}"
         BBFILES += "${LAYERDIR}/recipes-*/*/*.bb"
