@@ -48,7 +48,7 @@ jobs:
         git clone -b kirkstone git://git.openembedded.org/meta-openembedded ../meta-openembedded
 
         # Cloner waydroid
-        git clone https://github.com/waydroid/meta-waydroid ../meta-waydroid
+        git clone https://github.com/waydroid/waydroid ../meta-waydroid
 
         # Ajouter un layer personnalisé pour Waydroid
         mkdir -p ../meta-custom/recipes-kernel/linux/files
