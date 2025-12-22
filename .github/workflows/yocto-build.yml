@@ -18,11 +18,12 @@ jobs:
         sudo rm -rf /opt/ghc
         sudo df -h
 
+   
     - name: Build with Kas
       run: |
         docker run --rm -v $(pwd):/work:rw \
-          ghcr.io/siemens/kas/kas:4.0 \
-          build /work/kas-project.yml
+         ghcr.io/siemens/kas/kas:latest \
+         build /work/kas-project.yml
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
