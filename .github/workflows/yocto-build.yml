@@ -22,7 +22,19 @@ jobs:
         sudo apt install -y \
           gawk wget git-core diffstat unzip texinfo gcc build-essential chrpath socat cpio python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping bzip2 \
           lxc lxc-utils curl libglib2.0-dev libwayland-client0 libsystemd-dev git pkg-config
+    
+    - name: Cache Yocto sstate
+      uses: actions/cache@v3
+      with:
+        path: poky/build/sstate-cache
+        key: yocto-sstate-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          yocto-sstate-${{ runner.os }}
 
+    - name: Clean Yocto tmp directory
+      run: |
+        rm -rf poky/build/tmp
+        
     - name: Clone Yocto layers
       run: |
         # Cloner le dépôt principal de Yocto (Poky)
@@ -64,17 +76,10 @@ jobs:
       run: |
         source poky/oe-init-build-env build
         bitbake core-image-minimal
-
+        
     - name: Upload Yocto Image
       uses: actions/upload-artifact@v4
       with:
         name: yocto-image
         path: poky/build/tmp/deploy/images/raspberrypi4-64/
         
-    - name: Cache Yocto sstate
-      uses: actions/cache@v3
-      with:
-        path: poky/build/sstate-cache
-        key: yocto-sstate-${{ runner.os }}-${{ github.sha }}
-        restore-keys: |
-          yocto-sstate-${{ runner.os }}
