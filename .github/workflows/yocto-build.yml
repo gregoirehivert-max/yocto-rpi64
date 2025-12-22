@@ -48,6 +48,7 @@ jobs:
         git clone -b kirkstone git://git.openembedded.org/meta-openembedded ../meta-openembedded
 
         # Créer un layer personnalisé
+        source oe-init-build-env build        
         bitbake-layers create-layer ../meta-custom
         mkdir -p ../meta-custom/recipes-waydroid
 
