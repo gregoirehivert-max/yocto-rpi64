@@ -36,7 +36,8 @@ jobs:
         git clone -b kirkstone git://git.openembedded.org/meta-openembedded ../meta-openembedded
         
         # Clone the layer (example: meta-luneos)
-        git clone https://github.com/webOS-ports/meta-luneos.git ../meta-luneos
+        
+        git clone https://layers.openembedded.org/layerindex/recipe/304779/ ../meta-luneos
 
 
     - name: Configure Yocto for Raspberry Pi 4 (64-bit)
