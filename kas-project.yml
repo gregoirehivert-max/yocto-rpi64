@@ -31,6 +31,7 @@ repos:
 local_conf_header:
   standard: |
     CONF_VERSION = "2"
+    INHERIT += "rm_work"
     PACKAGE_CLASSES ?= "package_rpm"
     EXTRA_IMAGE_FEATURES ?= "debug-tweaks"
     BB_NUMBER_THREADS ?= "4"
