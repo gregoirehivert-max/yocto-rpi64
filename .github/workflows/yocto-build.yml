@@ -47,7 +47,7 @@ jobs:
         bitbake core-image-minimal
 
     - name: Upload Yocto Image
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: yocto-image
         path: poky/build/tmp/deploy/images/raspberrypi4-64/
