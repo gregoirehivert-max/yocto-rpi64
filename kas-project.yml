@@ -1,0 +1,44 @@
+header:
+  version: 18
+
+machine: raspberrypi4-64
+distro: poky
+
+target:
+  - core-image-minimal
+
+repos:
+  poky:
+    url: "https://git.yoctoproject.org/git/poky"
+    branch: scarthgap
+    refspec: scarthgap
+    layers:
+      meta:
+      meta-poky:
+      meta-yocto-bsp:
+
+  meta-openembedded:
+    url: "https://git.openembedded.org/meta-openembedded"
+    branch: scarthgap
+    refspec: scarthgap
+    layers:
+      meta-oe:
+      meta-python:
+      meta-networking:
+
+  meta-raspberrypi:
+    url: "https://git.yoctoproject.org/git/meta-raspberrypi"
+    branch: scarthgap
+    refspec: scarthgap
+
+local_conf_header:
+  standard: |
+    CONF_VERSION = "2"
+    PACKAGE_CLASSES ?= "package_rpm"
+    EXTRA_IMAGE_FEATURES ?= "debug-tweaks"
+    BB_NUMBER_THREADS ?= "4"
+    PARALLEL_MAKE ?= "-j 4"
+    
+  raspberrypi: |
+    IMAGE_FSTYPES = "tar.xz rpi-sdimg"
+    ENABLE_UART = "1"
