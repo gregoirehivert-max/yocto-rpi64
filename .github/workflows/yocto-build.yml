@@ -37,7 +37,7 @@ jobs:
         
         # Clone the layer (example: meta-luneos)
         
-        git clone https://github.com/webOS-ports/meta-webos-ports/meta-luneos ../meta-luneos
+        git clone https://github.com/webOS-ports/meta-webos-ports/tree/kirkstone/meta-luneos ../meta-luneos
 
 
     - name: Configure Yocto for Raspberry Pi 4 (64-bit)
