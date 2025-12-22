@@ -105,10 +105,10 @@ jobs:
             # Vérification Python (BitBake requiert ≥ 3.8)
             python3 --version
             python3 - <<'PYCHK'
-import sys
-assert (sys.version_info.major, sys.version_info.minor) >= (3,8), f"Python {sys.version} < 3.8"
-print("Python OK pour BitBake:", sys.version)
-PYCHK
+            import sys
+            assert (sys.version_info.major, sys.version_info.minor) >= (3,8), f"Python {sys.version} < 3.8"
+            print("Python OK pour BitBake:", sys.version)
+            PYCHK
 
             # Ajouter les couches nécessaires
             bitbake-layers add-layer /work/sources/meta-raspberrypi
