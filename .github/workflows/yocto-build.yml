@@ -23,29 +23,6 @@ jobs:
           gawk wget git-core diffstat unzip texinfo gcc build-essential chrpath socat cpio python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping bzip2 \
           lxc lxc-utils curl libglib2.0-dev libwayland-client0 libsystemd-dev git pkg-config
 
-    - name: Build and install libglibutil from source
-      run: |
-        # Télécharger et compiler libglibutil
-        git clone https://github.com/sailfishos/libglibutil.git
-        cd libglibutil
-        make
-        sudo make install
-        sudo ldconfig
-        # Vérifier que libglibutil est installé
-        ldconfig -p | grep libglibutil
-
-    - name: Build and install libgbinder from source
-      run: |
-        # Télécharger et compiler libgbinder
-        git clone https://github.com/mer-hybris/libgbinder.git
-        cd libgbinder
-        export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
-        make
-        sudo make install
-        sudo ldconfig
-        # Vérifier que libgbinder est installé
-        ldconfig -p | grep libgbinder
-
     - name: Clone Yocto layers
       run: |
         # Cloner le dépôt principal de Yocto (Poky)
@@ -57,6 +34,10 @@ jobs:
 
         # Cloner meta-openembedded pour les dépendances supplémentaires
         git clone -b kirkstone git://git.openembedded.org/meta-openembedded ../meta-openembedded
+        
+        # Clone the layer (example: meta-luneos)
+        git clone https://github.com/webOS-ports/meta-luneos.git
+
 
     - name: Configure Yocto for Raspberry Pi 4 (64-bit)
       run: |
@@ -65,7 +46,8 @@ jobs:
         # Ajouter les layers nécessaires à bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-raspberrypi"' >> conf/bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-oe"' >> conf/bblayers.conf
-        echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-python"' >> conf/bblayers.conf
+        echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-python"' >> conf/bblayers.conf      
+        echo 'BBLAYERS += "${TOPDIR}/../meta-luneos"' >> conf/bblayers.conf
 
         # Configurer local.conf pour Raspberry Pi 4 en 64 bits avec Waydroid
         echo 'MACHINE = "raspberrypi4-64"' >> conf/local.conf
@@ -75,7 +57,7 @@ jobs:
         echo 'GPU_MEM = "256"' >> conf/local.conf
         echo 'ENABLE_UART = "1"' >> conf/local.conf
         echo 'IMAGE_FSTYPES = "rpi-sdimg"' >> conf/local.conf
-        echo 'IMAGE_INSTALL:append = " vim python3 nano wayland weston lxc lxc-utils libsystemd libglib2.0-dev"' >> conf/local.conf
+        echo 'IMAGE_INSTALL:append = " vim python3 nano wayland weston lxc lxc-utils binder libsystemd libglib2.0-dev"' >> conf/local.conf
 
     - name: Build Yocto image
       run: |
@@ -87,3 +69,11 @@ jobs:
       with:
         name: yocto-image
         path: poky/build/tmp/deploy/images/raspberrypi4-64/
+        
+    - name: Cache Yocto sstate
+      uses: actions/cache@v3
+      with:
+        path: poky/build/sstate-cache
+        key: yocto-sstate-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          yocto-sstate-${{ runner.os }}
