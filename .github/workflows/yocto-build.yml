@@ -31,15 +31,20 @@ jobs:
         make
         sudo make install
         sudo ldconfig
+        # Vérifier que libglibutil est installé
+        ldconfig -p | grep libglibutil
 
     - name: Build and install libgbinder from source
       run: |
         # Télécharger et compiler libgbinder
         git clone https://github.com/mer-hybris/libgbinder.git
         cd libgbinder
+        export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
         make
         sudo make install
         sudo ldconfig
+        # Vérifier que libgbinder est installé
+        ldconfig -p | grep libgbinder
 
     - name: Clone Yocto layers
       run: |
