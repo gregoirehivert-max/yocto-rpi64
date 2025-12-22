@@ -80,8 +80,14 @@ jobs:
             set -eux
             cd /work
 
-            # Initialiser l'env de build dans /work/build
-            . sources/poky/oe-init-build-env build
+            # Éviter l'erreur "unbound variable" en désactivant nounset avant le source
+            set +u
+            # (Optionnel) éviter le mode serveur BitBake si variable non définie
+            export BBSERVER=""
+            # Initialiser l'environnement Yocto dans /work/build
+            source sources/poky/oe-init-build-env build
+            # Réactiver nounset après initialisation si souhaité
+            set -u
 
             # Ajouter les couches nécessaires
             bitbake-layers add-layer /work/sources/meta-raspberrypi
