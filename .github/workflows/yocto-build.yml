@@ -1,99 +1,119 @@
-name: Yocto Build for Raspberry Pi 4 with Waydroid
+
+name: Build Yocto RPi 64-bit
 
 on:
+  workflow_dispatch:
+    inputs:
+      machine:
+        description: "MACHINE Yocto (ex: raspberrypi4-64, raspberrypi3-64)"
+        default: "raspberrypi4-64"
+        required: true
+      image:
+        description: "Image à builder (ex: core-image-minimal, core-image-base)"
+        default: "core-image-minimal"
+        required: true
+      yocto_branch:
+        description: "Branche Yocto (ex: scarthgap)"
+        default: "scarthgap"
+        required: true
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+
+env:
+  YOCTO_BRANCH: ${{ inputs.yocto_branch || 'scarthgap' }}
+  MACHINE: ${{ inputs.machine || 'raspberrypi4-64' }}
+  IMAGE: ${{ inputs.image || 'core-image-minimal' }}
 
 jobs:
   build:
-    runs-on: ubuntu-22.04  # Utilisation d'Ubuntu 22.04 pour éviter les problèmes liés aux user namespaces
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y \
-          gawk wget git-core diffstat unzip texinfo gcc build-essential chrpath socat cpio python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping bzip2 \
-          lxc lxc-utils curl libglib2.0-dev libwayland-client0 libsystemd-dev git pkg-config
-    
-    - name: Cache Yocto sstate
-      uses: actions/cache@v3
-      with:
-        path: poky/build/sstate-cache
-        key: yocto-sstate-${{ runner.os }}-${{ github.sha }}
-        restore-keys: |
-          yocto-sstate-${{ runner.os }}
+      - name: Préparer caches (downloads & sstate)
+        run: |
+          set -eux
+          mkdir -p build/downloads build/sstate-cache
 
-    - name: Clean Yocto tmp directory
-      run: |
-        rm -rf poky/build/tmp
-        
-    - name: Clone Yocto layers
-      run: |
-        # Cloner le dépôt principal de Yocto (Poky)
-        git clone -b kirkstone git://git.yoctoproject.org/poky
-        cd poky
+      - name: Cache downloads
+        uses: actions/cache@v4
+        with:
+          path: build/downloads
+          key: yocto-${{ env.YOCTO_BRANCH }}-${{ env.MACHINE }}-downloads-${{ runner.os }}
+          restore-keys: |
+            yocto-${{ env.YOCTO_BRANCH }}-${{ env.MACHINE }}-downloads-
+            yocto-${{ env.YOCTO_BRANCH }}-downloads-
+            yocto-downloads-
 
-        # Cloner le layer meta-raspberrypi pour le support Raspberry Pi
-        git clone -b kirkstone git://git.yoctoproject.org/meta-raspberrypi ../meta-raspberrypi
+      - name: Cache sstate
+        uses: actions/cache@v4
+        with:
+          path: build/sstate-cache
+          key: yocto-${{ env.YOCTO_BRANCH }}-${{ env.MACHINE }}-sstate-${{ runner.os }}
+          restore-keys: |
+            yocto-${{ env.YOCTO_BRANCH }}-${{ env.MACHINE }}-sstate-
+            yocto-${{ env.YOCTO_BRANCH }}-sstate-
+            yocto-sstate-
 
-        # Cloner meta-openembedded pour les dépendances supplémentaires
-        git clone -b kirkstone git://git.openembedded.org/meta-openembedded ../meta-openembedded
+      - name: Récupérer les couches Yocto
+        run: |
+          set -eux
+          mkdir -p sources
+          git clone --depth 1 -b "${YOCTO_BRANCH}" https://git.yoctoproject.org/poky sources/poky
+          git clone --depth 1 -b "${YOCTO_BRANCH}" https://git.yoctoproject.org/meta-raspberrypi sources/meta-raspberrypi
+          git clone --depth 1 -b "${YOCTO_BRANCH}" https://git.openembedded.org/meta-openembedded sources/meta-openembedded
 
-        # Cloner les recettes Waydroid depuis kvfasil/waydroid
-        
-        source oe-init-build-env build
-        bitbake-layers create-layer ../meta-waydroid        
-        git clone https://github.com/kvfasil/waydroid ../meta_waydroid/recipes-waydroid
+      - name: Build dans conteneur CROPS/Poky
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ghcr.io/crops/poky:latest
+          options: >
+            -v ${{ github.workspace }}:/work
+            -e YOCTO_BRANCH=${{ env.YOCTO_BRANCH }}
+            -e MACHINE=${{ env.MACHINE }}
+            -e IMAGE=${{ env.IMAGE }}
+          run: |
+            set -eux
+            cd /work
 
-        # Ajouter le fichier layer.conf dans le layer personnalisé
-        mkdir -p ../meta-waydroid/conf
-        cat <<EOT > ../meta-waydroid/conf/layer.conf
-        # Layer configuration for meta-waydroid
-        BBPATH .= ":${LAYERDIR}"
-        BBFILES += "${LAYERDIR}/recipes-*/*/*.bb"
-        BBFILE_COLLECTIONS += "meta-waydroid"
-        BBFILE_PATTERN_meta-custom = "^${LAYERDIR}/"
-        BBFILE_PRIORITY_meta-custom = "6"
-        EOT
-        
-    - name: Configure Yocto for Raspberry Pi 4 (64-bit)
-      run: |
-        source poky/oe-init-build-env build
+            # Initialiser l'env de build dans /work/build
+            . sources/poky/oe-init-build-env build
 
-        # Ajouter les layers nécessaires à bblayers.conf
-        echo 'BBLAYERS += "${TOPDIR}/../meta-raspberrypi"' >> conf/bblayers.conf
-        echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-oe"' >> conf/bblayers.conf
-        echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-python"' >> conf/bblayers.conf      
-        echo 'BBLAYERS += "${TOPDIR}/../meta-waydroid"' >> conf/bblayers.conf
-        
-        # Configurer local.conf pour Raspberry Pi 4 en 64 bits avec Waydroid
-        echo 'MACHINE = "raspberrypi4-64"' >> conf/local.conf
-        echo 'DISTRO = "poky"' >> conf/local.conf
-        echo 'PACKAGE_CLASSES = "package_deb"' >> conf/local.conf
-        echo 'EXTRA_IMAGE_FEATURES = "debug-tweaks ssh-server-dropbear"' >> conf/local.conf
-        echo 'GPU_MEM = "256"' >> conf/local.conf
-        echo 'ENABLE_UART = "1"' >> conf/local.conf
-        echo 'IMAGE_FSTYPES = "rpi-sdimg"' >> conf/local.conf
-        echo 'IMAGE_INSTALL:append = " vim python3 nano wayland waydroid weston kernel-modules"' >> conf/local.conf
-        echo 'INCOMPATIBLE_LICENSE_EXCEPTIONS += " waydroid"' >> conf/local.conf
-        echo 'DISTRO_FEATURES:append = " waydroid"' >> conf/local.conf
-        
-    - name: Build Yocto image
-      run: |
-        source poky/oe-init-build-env build
-        bitbake core-image-minimal
-        
-    - name: Upload Yocto Image
-      uses: actions/upload-artifact@v4
-      with:
-        name: yocto-image
-        path: poky/build/tmp/deploy/images/raspberrypi4-64/
-        
+            # Ajouter les couches nécessaires
+            bitbake-layers add-layer /work/sources/meta-raspberrypi
+            bitbake-layers add-layer /work/sources/meta-openembedded/meta-oe
+            bitbake-layers add-layer /work/sources/meta-openembedded/meta-networking
+            bitbake-layers add-layer /work/sources/meta-openembedded/meta-python
+
+            # Configurer local.conf pour RPi 64 bits et image SD
+            cat <<'EOF' >> conf/local.conf
+            MACHINE ??= "${MACHINE}"
+            # Générer une image SD
+            IMAGE_FSTYPES += " rpi-sdimg"
+            # Optionnel: forcer systemd
+            DISTRO_FEATURES:append = " systemd"
+            # Accélérer la compilation en CI
+            BB_NUMBER_THREADS ?= "${@oe.utils.cpu_count()}"
+            PARALLEL_MAKE ?= "-j${@oe.utils.cpu_count()}"
+            # (Optionnel) réduire la taille: décommentez pour supprimer les workdirs
+            # INHERIT += "rm_work"
+            EOF
+
+            # Lancer la compilation
+            bitbake ${IMAGE}
+
+            # Collecter les artefacts
+            OUT=/work/artifacts
+            mkdir -p "$OUT"
+            DEPLOY="tmp/deploy/images/${MACHINE}"
+            cp -v ${DEPLOY}/* ${OUT}/ || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: yocto-${{ env.MACHINE }}-${{ env.IMAGE }}-${{ env.YOCTO_BRANCH }}
+          path          path: artifacts
