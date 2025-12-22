@@ -24,9 +24,11 @@ jobs:
           lxc lxc-utils curl libglib2.0-dev libwayland-client0 libsystemd-dev git pkg-config
 
     - name: Build and install gutil from source
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
       run: |
         # Télécharger et compiler gutil
-        git clone https://github.com/mer-hybris/gutil.git
+        git clone https://$GH_TOKEN@github.com/mer-hybris/gutil.git
         cd gutil
         make
         sudo make install
