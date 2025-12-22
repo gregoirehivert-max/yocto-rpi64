@@ -71,7 +71,7 @@ jobs:
           git clone --depth 1 -b "${YOCTO_BRANCH}" https://git.yoctoproject.org/meta-raspberrypi sources/meta-raspberrypi
           git clone --depth 1 -b "${YOCTO_BRANCH}" https://git.openembedded.org/meta-openembedded sources/meta-openembedded
 
-      - name: Build dans conteneur Ubuntu 22.04
+      - name: Build dans conteneur Ubuntu 22.04 (exécution avec bash)
         uses: addnab/docker-run-action@v3
         with:
           image: ubuntu:22.04
@@ -83,28 +83,20 @@ jobs:
             -e IMAGE_FSTYPES=${{ env.IMAGE_FSTYPES }}
           run: |
             bash -lc '
-            set -eo pipefail
+            set -euxo pipefail
             export DEBIAN_FRONTEND=noninteractive
             apt-get update
             apt-get install -y \
               git gawk wget diffstat unzip texinfo gcc build-essential chrpath socat cpio python3 python3-distutils python3-venv \
-              zstd xz-utils tar pkg-config
+              zstd xz-utils tar pkg-config locales
+            # (optionnel) locale pour certains outils
+            locale-gen en_US.UTF-8 || true
 
             cd /work
-
-            # Installer les buildtools officiels (assure toolchain cohérente)
-            mkdir -p /work/.buildtools
-            bash sources/poky/scripts/install-buildtools -n -t /work/.buildtools
-
-            # Mettre buildtools EN TÊTE du PATH avant toute commande Yocto
-            export PATH="/work/.buildtools/usr/bin:$PATH"
-            export LD_LIBRARY_PATH="/work/.buildtools/usr/lib:/work/.buildtools/lib:${LD_LIBRARY_PATH:-}"
-            export PYTHONNOUSERSITE=1
-
-            echo "which python3 => $(which python3)"
+            echo "python3 système => $(which python3)"
             python3 --version
 
-            # Initialiser l'environnement Yocto
+            # Initialiser l environnement Yocto (crée /work/build et conf/)
             set +u
             export BBSERVER=""
             source /work/sources/poky/oe-init-build-env /work/build
@@ -116,11 +108,12 @@ jobs:
             bitbake-layers add-layer /work/sources/meta-openembedded/meta-networking
             bitbake-layers add-layer /work/sources/meta-openembedded/meta-python
 
-            # Configurer local.conf (caches, machine, image types, parallélisme)
-            cat <<'EOF' >> conf/local.conf
+            # Configurer local.conf (caches, machine, types d images, parallélisme)
+            cat <<'"EOF"' >> conf/local.conf
             MACHINE ??= "${MACHINE}"
             IMAGE_FSTYPES += " ${IMAGE_FSTYPES}"
 
+            # Caches persistants
             DL_DIR ?= "/work/downloads"
             SSTATE_DIR ?= "/work/sstate-cache"
 
@@ -129,12 +122,9 @@ jobs:
             BB_NUMBER_THREADS ?= "${@oe.utils.cpu_count()}"
             PARALLEL_MAKE ?= "-j${@oe.utils.cpu_count()}"
 
+            # (optionnel) alléger tmp
             # INHERIT += "rm_work"
             EOF
-
-            # Sanity check: python résolu dans PATH à ce stade ?
-            echo "python3 used by bitbake: $(which python3)"
-            python3 --version
 
             # Build
             bitbake ${IMAGE}
@@ -145,10 +135,9 @@ jobs:
             DEPLOY="tmp/deploy/images/${MACHINE}"
             cp -v ${DEPLOY}/* ${OUT}/ || true
             '
-            
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: yocto-${{ env.MACHINE }}-${{ env.IMAGE }}-${{ env.YOCTO_BRANCH }}
           path: artifacts
-
