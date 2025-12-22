@@ -70,24 +70,41 @@ jobs:
       - name: Build dans conteneur CROPS/Poky
         uses: addnab/docker-run-action@v3
         with:
-          image: ghcr.io/crops/poky:latest
+          image: ghcr.io/crops/poky:scarthgap
           options: >
             -v ${{ github.workspace }}:/work
             -e YOCTO_BRANCH=${{ env.YOCTO_BRANCH }}
             -e MACHINE=${{ env.MACHINE }}
             -e IMAGE=${{ env.IMAGE }}
           run: |
-            set -eux
+            #! /bin/bash
+            set -eo pipefail
             cd /work
 
             # Éviter l'erreur "unbound variable" en désactivant nounset avant le source
             set +u
-            # (Optionnel) éviter le mode serveur BitBake si variable non définie
             export BBSERVER=""
-            # Initialiser l'environnement Yocto dans /work/build
             source sources/poky/oe-init-build-env build
-            # Réactiver nounset après initialisation si souhaité
             set -u
+
+            # Installer les buildtools Yocto (inclut python3 >= 3.8)
+            # Les buildtools sont téléchargés selon la branche de poky
+            mkdir -p /work/.buildtools
+            scripts/install-buildtools -n -t /work/.buildtools
+
+            # Activer buildtools dans l'environnement
+            export PATH="/work/.buildtools/usr/bin:$PATH"
+            export LD_LIBRARY_PATH="/work/.buildtools/usr/lib:/work/.buildtools/lib:${LD_LIBRARY_PATH:-}"
+
+            # Vérifier que python3 est bien >= 3.8
+            echo "Python3 version:"
+            python3 --version
+            python3 - <<'PYCHK'
+            import sys
+            ver = sys.version_info
+            assert (ver.major, ver.minor) >= (3,8), f"Python {ver.major}.{ver.minor} detected, need >= 3.8"
+            print("Python OK for BitBake:", sys.version)
+            PYCHK
 
             # Ajouter les couches nécessaires
             bitbake-layers add-layer /work/sources/meta-raspberrypi
