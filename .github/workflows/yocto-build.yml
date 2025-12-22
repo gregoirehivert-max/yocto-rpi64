@@ -46,6 +46,25 @@ jobs:
 
         # Cloner meta-openembedded pour les dépendances supplémentaires
         git clone -b kirkstone git://git.openembedded.org/meta-openembedded ../meta-openembedded
+
+        # Cloner waydroid
+        git clone https://github.com/waydroid/meta-waydroid ../meta-waydroid
+
+        # Ajouter un layer personnalisé pour Waydroid
+        mkdir -p ../meta-custom/recipes-kernel/linux/files
+        echo 'CONFIG_ANDROID=y' > ../meta-custom/recipes-kernel/linux/files/waydroid.cfg
+        echo 'CONFIG_ANDROID_BINDER_IPC=y' >> ../meta-custom/recipes-kernel/linux/files/waydroid.cfg
+        echo 'CONFIG_ANDROID_BINDER_DEVICES="binder,hwbinder,vndbinder"' >> ../meta-custom/recipes-kernel/linux/files/waydroid.cfg
+        echo 'CONFIG_ANDROID_BINDER_IPC_SELFTEST=n' >> ../meta-custom/recipes-kernel/linux/files/waydroid.cfg
+        echo 'CONFIG_ASHMEM=y' >> ../meta-custom/recipes-kernel/linux/files/waydroid.cfg
+
+        # Créer une recette pour inclure la configuration du noyau
+        mkdir -p ../meta-custom/recipes-kernel/linux
+        echo 'FILESEXTRAPATHS_prepend := "${THISDIR}/files:"' > ../meta-custom/recipes-kernel/linux/linux-raspberrypi_%.bbappend
+        echo 'SRC_URI += "file://waydroid.cfg"' >> ../meta-custom/recipes-kernel/linux/linux-raspberrypi_%.bbappend
+        echo 'do_configure:append() {' >> ../meta-custom/recipes-kernel/linux/linux-raspberrypi_%.bbappend
+        echo '    cat ${WORKDIR}/waydroid.cfg >> ${B}/.config' >> ../meta-custom/recipes-kernel/linux/linux-raspberrypi_%.bbappend
+        echo '}' >> ../meta-custom/recipes-kernel/linux/linux-raspberrypi_%.bbappend
         
     - name: Configure Yocto for Raspberry Pi 4 (64-bit)
       run: |
@@ -55,16 +74,18 @@ jobs:
         echo 'BBLAYERS += "${TOPDIR}/../meta-raspberrypi"' >> conf/bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-oe"' >> conf/bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-python"' >> conf/bblayers.conf      
-
+        echo 'BBLAYERS += "${TOPDIR}/../meta-waydroid"' >> conf/bblayers.conf
+        echo 'BBLAYERS += "${TOPDIR}/../meta-custom"' >> conf/bblayers.conf
+        
         # Configurer local.conf pour Raspberry Pi 4 en 64 bits avec Waydroid
         echo 'MACHINE = "raspberrypi4-64"' >> conf/local.conf
         echo 'DISTRO = "poky"' >> conf/local.conf
         echo 'PACKAGE_CLASSES = "package_deb"' >> conf/local.conf
-        echo 'EXTRA_IMAGE_FEATURES = "debug-tweaks"' >> conf/local.conf
+        echo 'EXTRA_IMAGE_FEATURES = "debug-tweaks ssh-server-dropbear"' >> conf/local.conf
         echo 'GPU_MEM = "256"' >> conf/local.conf
         echo 'ENABLE_UART = "1"' >> conf/local.conf
         echo 'IMAGE_FSTYPES = "rpi-sdimg"' >> conf/local.conf
-        echo 'IMAGE_INSTALL:append = " vim python3 nano wayland weston binder lxc lxc-utils libsystemd libglib2.0-dev"' >> conf/local.conf
+        echo 'IMAGE_INSTALL:append = " vim python3 nano wayland waydroid weston kernel-modules"' >> conf/local.conf
 
     - name: Build Yocto image
       run: |
