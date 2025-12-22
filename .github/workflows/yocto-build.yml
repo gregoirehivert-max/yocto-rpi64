@@ -76,13 +76,14 @@ jobs:
         with:
           image: ubuntu:22.04
           options: >
+            --entrypoint /bin/bash
             -v ${{ github.workspace }}:/work
             -e YOCTO_BRANCH=${{ env.YOCTO_BRANCH }}
             -e MACHINE=${{ env.MACHINE }}
             -e IMAGE=${{ env.IMAGE }}
             -e IMAGE_FSTYPES=${{ env.IMAGE_FSTYPES }}
           run: |
-            #! /bin/bash
+            -lc '
             set -eo pipefail
             export DEBIAN_FRONTEND=noninteractive
             apt-get update
@@ -144,7 +145,8 @@ jobs:
             mkdir -p "$OUT"
             DEPLOY="tmp/deploy/images/${MACHINE}"
             cp -v ${DEPLOY}/* ${OUT}/ || true
-
+            '
+            
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
