@@ -48,7 +48,9 @@ jobs:
         git clone -b kirkstone git://git.openembedded.org/meta-openembedded ../meta-openembedded
 
         # Cloner les recettes Waydroid depuis kvfasil/waydroid
-        mkdir -p ../meta_waydroid
+        
+        source poky/oe-init-build-env build
+        bitbake-layers create-layer ../meta-waydroid        
         git clone https://github.com/kvfasil/waydroid ../meta_waydroid/recipes-waydroid
 
         # Ajouter le fichier layer.conf dans le layer personnalisé
@@ -64,7 +66,6 @@ jobs:
         
     - name: Configure Yocto for Raspberry Pi 4 (64-bit)
       run: |
-        source poky/oe-init-build-env build
 
         # Ajouter les layers nécessaires à bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-raspberrypi"' >> conf/bblayers.conf
