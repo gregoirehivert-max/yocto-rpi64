@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04  # Utilisation d'Ubuntu 22.04 pour éviter les problèmes avec les user namespaces
 
     steps:
     - name: Checkout code
@@ -21,21 +21,28 @@ jobs:
         sudo apt update
         sudo apt install -y gawk wget git-core diffstat unzip texinfo gcc build-essential chrpath socat cpio python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping bzip2
 
-    - name: Enable user namespaces
-      run: |
-        sudo sysctl -w kernel.unprivileged_userns_clone=1
-
     - name: Clone Yocto layers
       run: |
+        # Clone le dépôt principal de Yocto (Poky)
         git clone -b kirkstone git://git.yoctoproject.org/poky
         cd poky
+
+        # Clone le layer meta-raspberrypi pour le support Raspberry Pi
         git clone -b kirkstone git://git.yoctoproject.org/meta-raspberrypi
+
+        # Clone meta-openembedded pour les dépendances supplémentaires
         git clone -b kirkstone git://git.openembedded.org/meta-openembedded
-        cd ..
 
     - name: Configure Yocto for Raspberry Pi 4 (64-bit)
       run: |
         source poky/oe-init-build-env build
+
+        # Ajouter les layers nécessaires à bblayers.conf
+        echo 'BBLAYERS += "${TOPDIR}/../meta-raspberrypi"' >> conf/bblayers.conf
+        echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-oe"' >> conf/bblayers.conf
+        echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-python"' >> conf/bblayers.conf
+
+        # Configurer local.conf pour Raspberry Pi 4 en 64 bits
         echo 'MACHINE = "raspberrypi4-64"' >> conf/local.conf
         echo 'DISTRO = "poky"' >> conf/local.conf
         echo 'PACKAGE_CLASSES = "package_deb"' >> conf/local.conf
