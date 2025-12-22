@@ -47,11 +47,6 @@ jobs:
         # Cloner meta-openembedded pour les dépendances supplémentaires
         git clone -b kirkstone git://git.openembedded.org/meta-openembedded ../meta-openembedded
         
-        # Clone the layer (example: meta-luneos)
-        
-        git clone https://github.com/webOS-ports/meta-webos-ports/tree/kirkstone/meta-luneos ../meta-luneos
-
-
     - name: Configure Yocto for Raspberry Pi 4 (64-bit)
       run: |
         source poky/oe-init-build-env build
@@ -60,7 +55,6 @@ jobs:
         echo 'BBLAYERS += "${TOPDIR}/../meta-raspberrypi"' >> conf/bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-oe"' >> conf/bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-python"' >> conf/bblayers.conf      
-        echo 'BBLAYERS += "${TOPDIR}/../meta-luneos"' >> conf/bblayers.conf
 
         # Configurer local.conf pour Raspberry Pi 4 en 64 bits avec Waydroid
         echo 'MACHINE = "raspberrypi4-64"' >> conf/local.conf
