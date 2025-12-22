@@ -9,12 +9,16 @@ on:
         default: "raspberrypi4-64"
         required: true
       image:
-        description: "Image à builder (ex: core-image-minimal, core-image-base)"
+        description: "Image à builder (ex: core-image-minimal, core-image-base, custom)"
         default: "core-image-minimal"
         required: true
       yocto_branch:
         description: "Branche Yocto (ex: scarthgap)"
         default: "scarthgap"
+        required: true
+      image_fstypes:
+        description: "Type(s) d'image (ex: rpi-sdimg | wic wic.bmap)"
+        default: "rpi-sdimg"
         required: true
   push:
     branches: [ main ]
@@ -24,6 +28,7 @@ env:
   YOCTO_BRANCH: ${{ inputs.yocto_branch || 'scarthgap' }}
   MACHINE: ${{ inputs.machine || 'raspberrypi4-64' }}
   IMAGE: ${{ inputs.image || 'core-image-minimal' }}
+  IMAGE_FSTYPES: ${{ inputs.image_fstypes || 'rpi-sdimg' }}
 
 jobs:
   build:
@@ -34,25 +39,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Préparer caches (downloads & sstate)
+      - name: Préparer arborescence & caches
         run: |
-          set -eux
-          mkdir -p build/downloads build/sstate-cache
+          set -euo pipefail
+          mkdir -p sources build downloads sstate-cache artifacts
 
-      - name: Cache downloads
+      - name: Cache downloads (DL_DIR)
         uses: actions/cache@v4
         with:
-          path: build/downloads
+          path: downloads
           key: yocto-${{ env.YOCTO_BRANCH }}-${{ env.MACHINE }}-downloads-${{ runner.os }}
           restore-keys: |
             yocto-${{ env.YOCTO_BRANCH }}-${{ env.MACHINE }}-downloads-
             yocto-${{ env.YOCTO_BRANCH }}-downloads-
             yocto-downloads-
 
-      - name: Cache sstate
+      - name: Cache sstate (SSTATE_DIR)
         uses: actions/cache@v4
         with:
-          path: build/sstate-cache
+          path: sstate-cache
           key: yocto-${{ env.YOCTO_BRANCH }}-${{ env.MACHINE }}-sstate-${{ runner.os }}
           restore-keys: |
             yocto-${{ env.YOCTO_BRANCH }}-${{ env.MACHINE }}-sstate-
@@ -61,13 +66,13 @@ jobs:
 
       - name: Récupérer les couches Yocto
         run: |
-          set -eux
-          mkdir -p sources
+          set -euo pipefail
+          # poky + meta-raspberrypi + meta-openembedded (branches alignées)
           git clone --depth 1 -b "${YOCTO_BRANCH}" https://git.yoctoproject.org/poky sources/poky
           git clone --depth 1 -b "${YOCTO_BRANCH}" https://git.yoctoproject.org/meta-raspberrypi sources/meta-raspberrypi
           git clone --depth 1 -b "${YOCTO_BRANCH}" https://git.openembedded.org/meta-openembedded sources/meta-openembedded
 
-      - name: Build dans conteneur CROPS/Poky
+      - name: Build dans conteneur CROPS/Poky (Docker Hub)
         uses: addnab/docker-run-action@v3
         with:
           image: crops/poky:latest
@@ -76,35 +81,34 @@ jobs:
             -e YOCTO_BRANCH=${{ env.YOCTO_BRANCH }}
             -e MACHINE=${{ env.MACHINE }}
             -e IMAGE=${{ env.IMAGE }}
+            -e IMAGE_FSTYPES=${{ env.IMAGE_FSTYPES }}
           run: |
             #! /bin/bash
             set -eo pipefail
             cd /work
 
-            # Éviter l'erreur "unbound variable" en désactivant nounset avant le source
+            # Éviter l'erreur "BBSERVER: unbound variable" pendant le sourcing
             set +u
             export BBSERVER=""
+            # Initialiser l'environnement Yocto dans /work/build
             source sources/poky/oe-init-build-env build
             set -u
 
-            # Installer les buildtools Yocto (inclut python3 >= 3.8)
-            # Les buildtools sont téléchargés selon la branche de poky
+            # Installer les buildtools officiels (assure python3 >= 3.8)
             mkdir -p /work/.buildtools
             scripts/install-buildtools -n -t /work/.buildtools
 
-            # Activer buildtools dans l'environnement
+            # Activer buildtools
             export PATH="/work/.buildtools/usr/bin:$PATH"
             export LD_LIBRARY_PATH="/work/.buildtools/usr/lib:/work/.buildtools/lib:${LD_LIBRARY_PATH:-}"
 
-            # Vérifier que python3 est bien >= 3.8
-            echo "Python3 version:"
+            # Vérification Python (BitBake requiert ≥ 3.8)
             python3 --version
             python3 - <<'PYCHK'
-            import sys
-            ver = sys.version_info
-            assert (ver.major, ver.minor) >= (3,8), f"Python {ver.major}.{ver.minor} detected, need >= 3.8"
-            print("Python OK for BitBake:", sys.version)
-            PYCHK
+import sys
+assert (sys.version_info.major, sys.version_info.minor) >= (3,8), f"Python {sys.version} < 3.8"
+print("Python OK pour BitBake:", sys.version)
+PYCHK
 
             # Ajouter les couches nécessaires
             bitbake-layers add-layer /work/sources/meta-raspberrypi
@@ -112,31 +116,40 @@ jobs:
             bitbake-layers add-layer /work/sources/meta-openembedded/meta-networking
             bitbake-layers add-layer /work/sources/meta-openembedded/meta-python
 
-            # Configurer local.conf pour RPi 64 bits et image SD
+            # Configurer local.conf : machine, types d'images, caches, parallélisme
             cat <<'EOF' >> conf/local.conf
+            # Machine et types d'images
             MACHINE ??= "${MACHINE}"
-            # Générer une image SD
-            IMAGE_FSTYPES += " rpi-sdimg"
-            # Optionnel: forcer systemd
+            IMAGE_FSTYPES += " ${IMAGE_FSTYPES}"
+
+            # Caches (montés en dehors de tmp pour persistance CI)
+            DL_DIR ?= "/work/downloads"
+            SSTATE_DIR ?= "/work/sstate-cache"
+
+            # Optionnel: système d'init
             DISTRO_FEATURES:append = " systemd"
-            # Accélérer la compilation en CI
+
+            # Parallélisme CI
             BB_NUMBER_THREADS ?= "${@oe.utils.cpu_count()}"
             PARALLEL_MAKE ?= "-j${@oe.utils.cpu_count()}"
-            # (Optionnel) réduire la taille: décommentez pour supprimer les workdirs
+
+            # (Optionnel) réduire la taille en CI
             # INHERIT += "rm_work"
             EOF
 
-            # Lancer la compilation
+            # Build de l'image
             bitbake ${IMAGE}
 
-            # Collecter les artefacts
+            # Collecte des artefacts
             OUT=/work/artifacts
             mkdir -p "$OUT"
             DEPLOY="tmp/deploy/images/${MACHINE}"
+            # Images (sdimg/wic), kernel, dtbs, bootloaders, manifs
             cp -v ${DEPLOY}/* ${OUT}/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: yocto-${{ env.MACHINE }}-${{ env.IMAGE }}-${{ env.YOCTO_BRANCH }}
-          path          path: artifacts
+          path: artifacts
+         
