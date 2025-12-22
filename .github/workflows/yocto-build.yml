@@ -21,7 +21,19 @@ jobs:
         sudo apt update
         sudo apt install -y \
           gawk wget git-core diffstat unzip texinfo gcc build-essential chrpath socat cpio python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping bzip2 \
-          lxc lxc-utils curl libglib2.0-dev libgbinder libwayland-client0 libsystemd-dev
+          lxc lxc-utils curl libglib2.0-dev libwayland-client0 libsystemd-dev
+
+    - name: Build and install libgbinder from source
+      run: |
+        # Télécharger et compiler libgbinder
+        git clone https://github.com/mer-hybris/libgbinder.git
+        cd libgbinder
+        mkdir build
+        cd build
+        cmake ..
+        make
+        sudo make install
+        sudo ldconfig
 
     - name: Clone Yocto layers
       run: |
@@ -52,7 +64,7 @@ jobs:
         echo 'GPU_MEM = "256"' >> conf/local.conf
         echo 'ENABLE_UART = "1"' >> conf/local.conf
         echo 'IMAGE_FSTYPES = "rpi-sdimg"' >> conf/local.conf
-        echo 'IMAGE_INSTALL:append = " vim python3 nano wayland weston lxc lxc-utils libgbinder libsystemd libglib2.0-dev"' >> conf/local.conf
+        echo 'IMAGE_INSTALL:append = " vim python3 nano wayland weston lxc lxc-utils libsystemd libglib2.0-dev"' >> conf/local.conf
 
     - name: Build Yocto image
       run: |
