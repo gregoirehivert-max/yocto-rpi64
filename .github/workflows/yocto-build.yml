@@ -47,24 +47,8 @@ jobs:
         # Cloner meta-openembedded pour les dépendances supplémentaires
         git clone -b kirkstone git://git.openembedded.org/meta-openembedded ../meta-openembedded
 
-        # Cloner waydroid
-        git clone https://github.com/waydroid/waydroid ../meta-waydroid
-
-        # Ajouter un layer personnalisé pour Waydroid
-        mkdir -p ../meta-custom/recipes-kernel/linux/files
-        echo 'CONFIG_ANDROID=y' > ../meta-custom/recipes-kernel/linux/files/waydroid.cfg
-        echo 'CONFIG_ANDROID_BINDER_IPC=y' >> ../meta-custom/recipes-kernel/linux/files/waydroid.cfg
-        echo 'CONFIG_ANDROID_BINDER_DEVICES="binder,hwbinder,vndbinder"' >> ../meta-custom/recipes-kernel/linux/files/waydroid.cfg
-        echo 'CONFIG_ANDROID_BINDER_IPC_SELFTEST=n' >> ../meta-custom/recipes-kernel/linux/files/waydroid.cfg
-        echo 'CONFIG_ASHMEM=y' >> ../meta-custom/recipes-kernel/linux/files/waydroid.cfg
-
-        # Créer une recette pour inclure la configuration du noyau
-        mkdir -p ../meta-custom/recipes-kernel/linux
-        echo 'FILESEXTRAPATHS_prepend := "${THISDIR}/files:"' > ../meta-custom/recipes-kernel/linux/linux-raspberrypi_%.bbappend
-        echo 'SRC_URI += "file://waydroid.cfg"' >> ../meta-custom/recipes-kernel/linux/linux-raspberrypi_%.bbappend
-        echo 'do_configure:append() {' >> ../meta-custom/recipes-kernel/linux/linux-raspberrypi_%.bbappend
-        echo '    cat ${WORKDIR}/waydroid.cfg >> ${B}/.config' >> ../meta-custom/recipes-kernel/linux/linux-raspberrypi_%.bbappend
-        echo '}' >> ../meta-custom/recipes-kernel/linux/linux-raspberrypi_%.bbappend
+        # Cloner la recette Waydroid depuis kvfasil/waydroid
+        git clone https://github.com/kvfasil/waydroid ../meta-waydroid
         
     - name: Configure Yocto for Raspberry Pi 4 (64-bit)
       run: |
@@ -75,7 +59,6 @@ jobs:
         echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-oe"' >> conf/bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-python"' >> conf/bblayers.conf      
         echo 'BBLAYERS += "${TOPDIR}/../meta-waydroid"' >> conf/bblayers.conf
-        echo 'BBLAYERS += "${TOPDIR}/../meta-custom"' >> conf/bblayers.conf
         
         # Configurer local.conf pour Raspberry Pi 4 en 64 bits avec Waydroid
         echo 'MACHINE = "raspberrypi4-64"' >> conf/local.conf
