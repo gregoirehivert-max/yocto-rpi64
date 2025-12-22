@@ -64,7 +64,7 @@ jobs:
         echo 'GPU_MEM = "256"' >> conf/local.conf
         echo 'ENABLE_UART = "1"' >> conf/local.conf
         echo 'IMAGE_FSTYPES = "rpi-sdimg"' >> conf/local.conf
-        echo 'IMAGE_INSTALL:append = " vim python3 nano wayland weston lxc lxc-utils binder libsystemd libglib2.0-dev"' >> conf/local.conf
+        echo 'IMAGE_INSTALL:append = " vim python3 nano wayland weston binder lxc lxc-utils libsystemd libglib2.0-dev"' >> conf/local.conf
 
     - name: Build Yocto image
       run: |
