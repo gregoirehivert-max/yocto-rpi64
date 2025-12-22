@@ -47,8 +47,24 @@ jobs:
         # Cloner meta-openembedded pour les dépendances supplémentaires
         git clone -b kirkstone git://git.openembedded.org/meta-openembedded ../meta-openembedded
 
-        # Cloner la recette Waydroid depuis kvfasil/waydroid
-        git clone https://github.com/kvfasil/waydroid ../meta-waydroid
+        # Créer un layer personnalisé
+        bitbake-layers create-layer ../meta-custom
+        mkdir -p ../meta-custom/recipes-waydroid
+
+        # Cloner les recettes Waydroid depuis kvfasil/waydroid
+        git clone https://github.com/kvfasil/waydroid
+        cp -r waydroid/* ../meta-custom/recipes-waydroid/
+
+        # Ajouter le fichier layer.conf dans le layer personnalisé
+        mkdir -p ../meta-custom/conf
+        cat <<EOT > ../meta-custom/conf/layer.conf
+        # Layer configuration for meta-custom
+        BBPATH .= ":${LAYERDIR}"
+        BBFILES += "${LAYERDIR}/recipes-*/*/*.bb"
+        BBFILE_COLLECTIONS += "meta-custom"
+        BBFILE_PATTERN_meta-custom = "^${LAYERDIR}/"
+        BBFILE_PRIORITY_meta-custom = "6"
+        EOT
         
     - name: Configure Yocto for Raspberry Pi 4 (64-bit)
       run: |
@@ -58,7 +74,7 @@ jobs:
         echo 'BBLAYERS += "${TOPDIR}/../meta-raspberrypi"' >> conf/bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-oe"' >> conf/bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-python"' >> conf/bblayers.conf      
-        echo 'BBLAYERS += "${TOPDIR}/../meta-waydroid"' >> conf/bblayers.conf
+        echo 'BBLAYERS += "${TOPDIR}/../meta-custom"' >> conf/bblayers.conf
         
         # Configurer local.conf pour Raspberry Pi 4 en 64 bits avec Waydroid
         echo 'MACHINE = "raspberrypi4-64"' >> conf/local.conf
@@ -69,7 +85,9 @@ jobs:
         echo 'ENABLE_UART = "1"' >> conf/local.conf
         echo 'IMAGE_FSTYPES = "rpi-sdimg"' >> conf/local.conf
         echo 'IMAGE_INSTALL:append = " vim python3 nano wayland waydroid weston kernel-modules"' >> conf/local.conf
-
+        echo 'WHITELIST_GPL-3.0 += " waydroid"' >> conf/local.conf
+        echo 'DISTRO_FEATURES:append = " waydroid"' >> conf/local.conf
+        
     - name: Build Yocto image
       run: |
         source poky/oe-init-build-env build
