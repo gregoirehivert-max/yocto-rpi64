@@ -6,8 +6,12 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with Kas
+        run: kas-container build kas-project.yml
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
