@@ -76,14 +76,13 @@ jobs:
         with:
           image: ubuntu:22.04
           options: >
-            --entrypoint /bin/bash
             -v ${{ github.workspace }}:/work
             -e YOCTO_BRANCH=${{ env.YOCTO_BRANCH }}
             -e MACHINE=${{ env.MACHINE }}
             -e IMAGE=${{ env.IMAGE }}
             -e IMAGE_FSTYPES=${{ env.IMAGE_FSTYPES }}
           run: |
-            -lc '
+            bash -lc '
             set -eo pipefail
             export DEBIAN_FRONTEND=noninteractive
             apt-get update
