@@ -3,8 +3,6 @@ name: Yocto RPi 64-bit Build
 on:
   push:
     branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build:
@@ -13,21 +11,21 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
     - name: Free disk space
       run: |
         sudo rm -rf /usr/share/dotnet
         sudo rm -rf /opt/ghc
-        sudo rm -rf /usr/local/share/boost
         sudo df -h
 
-    - name: Build Yocto image with Kas
+    - name: Build with Kas
       run: |
         docker run --rm -v $(pwd):/work:rw \
-          -v ~/.ssh:/root/.ssh:ro \
-          -e USER_ID=$(id -u) \
-          -e GROUP_ID=$(id -g) \
           ghcr.io/siemens/kas/kas:4.0 \
-          build /work/kas-project.
+          build /work/kas-project.yml
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: rpi-images
+        path: build/tmp/deploy/images/raspberrypi4-64/*.rpi-sdimg
