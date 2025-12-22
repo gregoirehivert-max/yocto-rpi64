@@ -28,9 +28,8 @@ jobs:
         # Télécharger et compiler libgbinder
         git clone https://github.com/mer-hybris/libgbinder.git
         cd libgbinder
-        meson setup build
-        ninja -C build
-        sudo ninja -C build install
+        make
+        sudo make install
         sudo ldconfig
 
     - name: Clone Yocto layers
