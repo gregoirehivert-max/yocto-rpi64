@@ -70,7 +70,7 @@ jobs:
       - name: Build dans conteneur CROPS/Poky
         uses: addnab/docker-run-action@v3
         with:
-          image: ghcr.io/crops/poky:scarthgap
+          image: crops/poky:latest
           options: >
             -v ${{ github.workspace }}:/work
             -e YOCTO_BRANCH=${{ env.YOCTO_BRANCH }}
