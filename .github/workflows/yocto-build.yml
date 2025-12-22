@@ -70,7 +70,7 @@ jobs:
         echo 'BBLAYERS += "${TOPDIR}/../meta-raspberrypi"' >> conf/bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-oe"' >> conf/bblayers.conf
         echo 'BBLAYERS += "${TOPDIR}/../meta-openembedded/meta-python"' >> conf/bblayers.conf      
-        echo 'BBLAYERS += "${TOPDIR}/../meta-custom"' >> conf/bblayers.conf
+        echo 'BBLAYERS += "${TOPDIR}/../meta-waydroid"' >> conf/bblayers.conf
         
         # Configurer local.conf pour Raspberry Pi 4 en 64 bits avec Waydroid
         echo 'MACHINE = "raspberrypi4-64"' >> conf/local.conf
