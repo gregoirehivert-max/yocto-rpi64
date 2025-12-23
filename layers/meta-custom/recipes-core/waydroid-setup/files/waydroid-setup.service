@@ -1,4 +1,3 @@
-cat > layers/meta-custom/recipes-core/waydroid-setup/files/waydroid-setup.service << 'EOF'
 [Unit]
 Description=Waydroid Setup Service
 After=network-online.target
@@ -14,4 +13,3 @@ StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
-EOF
