@@ -1,4 +1,3 @@
-cat > layers/meta-custom/recipes-core/waydroid-setup/files/setup-waydroid.sh << 'EOF'
 #!/bin/bash
 set -e
 
@@ -30,4 +29,3 @@ touch "$SETUP_FLAG"
 
 echo "=== Waydroid installé avec succès ==="
 echo "Lancer avec: waydroid show-full-ui"
-EOF
