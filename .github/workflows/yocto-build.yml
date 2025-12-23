@@ -40,7 +40,6 @@ jobs:
     - name: fix cache permissions
       run: | 
         mkdir -p downloads sstate-cache
-        sudo chown -R 1000:1000 downloads sstate-cache
         sudo chmod -R 777 downloads sstate-cache
         
     - name: Build with Kas
@@ -49,8 +48,6 @@ jobs:
          -v $(pwd):/work:rw \
          -v ${pwd}/downloads:/downloads:rw \
          -v ${pwd}/sstate-cache:/sstate-cache:rw \
-         -e USER_ID=$(id -u) \
-         -e GROUP_ID=$(id -g) \
          ghcr.io/siemens/kas/kas:latest \
          build /work/kas-project.yml
 
