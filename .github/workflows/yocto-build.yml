@@ -3,8 +3,15 @@ name: Yocto RPi 64-bit Build Optimized
 on:
   push:
     branches: [ main, develop ]
+    paths:
+      - 'kas-project.yml'
+      - '.github/workflows/yocto-build.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'kas-project.yml'
+      - '.github/workflows/yocto-build.yml'
+  workflow_dispatch:
 
 jobs:
   build:
