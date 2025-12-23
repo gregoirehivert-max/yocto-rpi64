@@ -1,65 +1,73 @@
-name: Yocto RPi 64-bit Build
+name: Yocto RPi 64-bit Build Optimized
 
 on:
   push:
     branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Free disk space
+    - name: Free disk space aggressively
       run: |
+        echo "Espace avant nettoyage:"
+        df -h
         sudo rm -rf /usr/share/dotnet
         sudo rm -rf /opt/ghc
         sudo rm -rf /usr/local/share/boost
         sudo rm -rf "$AGENT_TOOLSDIRECTORY"
         sudo rm -rf /usr/local/lib/android
-        sudo docker image prune --all --force df -h
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo rm -rf /usr/local/.ghcup
+        sudo apt-get clean
+        sudo docker image prune --all --force
+        echo "Espace après nettoyage:"
+        df -h
 
     - name: Cache Yocto downloads
       uses: actions/cache@v4
       with:
-        path: downloads
-        key: yocto-downloads-${{ hashFiles('kas-project.yml') }}
+        path: build/downloads
+        key: yocto-dl-${{ hashFiles('kas-project.yml') }}
         restore-keys: |
-          yocto-downloads-
+          yocto-dl-
 
     - name: Cache Yocto sstate
       uses: actions/cache@v4
       with:
-        path: sstate-cache        
-        key: yocto-sstate-${{ hashFiles('kas-project.yml') }}-${{ github.sha }}
+        path: build/sstate-cache
+        key: yocto-sstate-${{ hashFiles('kas-project.yml') }}-${{ github.run_number }}
         restore-keys: |
-          yocto-sstate-${{ hashFiles('kas-project.yml') }}-yocto-sstate-
+          yocto-sstate-${{ hashFiles('kas-project.yml') }}-
+          yocto-sstate-
 
-    - name: fix cache permissions
-      run: | 
-        mkdir -p downloads sstate-cache build
-        sudo chown -R 1000:1000 downloads sstate-cache build
-        sudo chmod -R 777 downloads sstate-cache build
-        ls -la
-        
-    - name: Build with Kas
+    - name: Download kas-container
       run: |
-        docker run --rm \
-         --user 1000:1000 \
-         -v $(pwd):/work:rw \
-         -v ${pwd}/downloads:/downloads:rw \
-         -v ${pwd}/sstate-cache:/sstate-cache:rw \
-         ghcr.io/siemens/kas/kas:latest \
-         build /work/kas-project.yml
-    
-    - name: Fix artifact permissions for upload
-      run: |
-        sudo chmod -R 755 build || true
+        wget -O kas-container https://raw.githubusercontent.com/siemens/kas/master/kas-container
+        chmod +x kas-container
 
-    - name: Upload artifacts
+    - name: Build with kas-container
+      run: |
+        export KAS_BUILD_DIR=$(pwd)/build
+        ./kas-container build kas-project.yml
+
+    - name: Show build size
+      run: |
+        echo "Taille du répertoire build:"
+        du -sh build/ || true
+        echo "Espace disque restant:"
+        df -h
+
+    - name: Upload image artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: rpi-images
+        name: rpi-yocto-image-${{ github.sha }}
         path: build/tmp/deploy/images/raspberrypi4-64/*.wic.bz2
+        retention-days: 7
+        compression-level: 9
