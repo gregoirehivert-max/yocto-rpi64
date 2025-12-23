@@ -1,0 +1,80 @@
+name: Yocto RPi 64-bit waydroid Build Optimized
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'kas-rpi64-waydroid.yml'
+      - '.github/workflows/yocto-rpi64-waydroid.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'kas-rpi64-waydroid.yml'
+      - '.github/workflows/yocto-rpi64-waydroid.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Free disk space aggressively
+      run: |
+        echo "Espace avant nettoyage:"
+        df -h
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo rm -rf /usr/local/.ghcup
+        sudo apt-get clean
+        sudo docker image prune --all --force
+        echo "Espace après nettoyage:"
+        df -h
+
+    - name: Cache Yocto downloads
+      uses: actions/cache@v4
+      with:
+        path: build/downloads
+        key: yocto-rpi64-waydroid-dl-${{ hashFiles('kas-rpi64-waydroid.yml') }}
+        restore-keys: |
+          yocto-rpi64-waydroid-dl-
+
+    - name: Cache Yocto sstate
+      uses: actions/cache@v4
+      with:
+        path: build/sstate-cache
+        key: yocto-rpi64-waydroid-sstate-${{ hashFiles('kas-rpi64-waydroid.yml') }}-${{ github.run_number }}
+        restore-keys: |
+          yocto-rpi64-waydroid-sstate-${{ hashFiles('kas-rpi64-waydroid.yml') }}-
+          yocto-rpi64-waydroid-sstate-
+
+    - name: Download kas-container
+      run: |
+        wget -O kas-container https://raw.githubusercontent.com/siemens/kas/master/kas-container
+        chmod +x kas-container
+
+    - name: Build with kas-container
+      run: |
+        export KAS_BUILD_DIR=$(pwd)/build
+        ./kas-container build kas-rpi64-waydroid.yml
+
+    - name: Show build size
+      run: |
+        echo "Taille du répertoire build:"
+        du -sh build/ || true
+        echo "Espace disque restant:"
+        df -h
+
+    - name: Upload image artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: rpi-yocto-image-${{ github.sha }}
+        path: build/tmp/deploy/images/raspberrypi4-64/*.wic.bz2
+        retention-days: 7
+        compression-level: 9
