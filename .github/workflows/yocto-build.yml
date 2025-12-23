@@ -16,12 +16,33 @@ jobs:
       run: |
         sudo rm -rf /usr/share/dotnet
         sudo rm -rf /opt/ghc
-        sudo df -h
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        sudo rm -rf /usr/local/lib/android
+        sudo docker image prune --all --force df -h
 
+    - name: Cache Yocto downloads
+      uses: actions/cache@v4
+      with:
+        path: downloads
+        key: yocto-downloads-${{ hashFiles('kas-project.yml') }}
+        restore-keys: |
+          yocto-download-
+
+    - name: Cache Yocto sstate
+      uses: action/cache@v4
+      with:
+        path: sstate-cache        
+        key: yocto-sstate-${{ hashFiles('kas-project.yml') }}-${{ github.sha }}
+        restore-keys: |
+          yocto-sstate-${{ hashFiles('kas-project.yml') }}-yocto-sstate-
    
     - name: Build with Kas
       run: |
-        docker run --rm -v $(pwd):/work:rw \
+        docker run --rm \
+         -v $(pwd):/work:rw \
+         -v ${pwd}/downloads:/dowloads:rw \
+         -v ${pwd}/sstate-cache:/sstate-cache:rw \
          ghcr.io/siemens/kas/kas:latest \
          build /work/kas-project.yml
 
@@ -29,4 +50,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: rpi-images
-        path: build/tmp/deploy/images/raspberrypi4-64/*.rpi-sdimg
+        path: build/tmp/deploy/images/raspberrypi4-64/*.wic.bz2
