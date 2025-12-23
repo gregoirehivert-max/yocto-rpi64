@@ -22,14 +22,15 @@ repos:
     layers:
       meta-oe:
       meta-python:
-      meta-networking:
-      meta-multimedia:
 
   meta-synaptics:
     url: "https://github.com/synaptics-astra/meta-synaptics"
     branch: kirkstone_5.15_v1.8.0
 
 local_conf_header:
+  parsing_threads: |
+    BB_NUMBER_PARSE_THREADS = "1"
+    
   synaptics_eula: |
     # EULA obligatoire
     ACCEPT_SYNA_EULA = "1"
