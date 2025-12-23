@@ -1,3 +1,4 @@
+cat > kas-rpi64-waydroid.yml << 'EOF'
 header:
   version: 14
 
@@ -5,7 +6,7 @@ machine: raspberrypi4-64
 distro: poky
 
 target:
-  - core-image-minimal
+  - rpi-test-image
 
 repos:
   poky:
@@ -23,49 +24,55 @@ repos:
       meta-oe:
       meta-python:
       meta-networking:
+      meta-multimedia:
 
   meta-raspberrypi:
-    url: "https://git.yoctoproject.org/git/meta-raspberrypi"
+    url: "https://git.yoctoproject.org/meta-raspberrypi"
     branch: scarthgap
 
+  meta-custom:
+    path: layers/meta-custom
+
 local_conf_header:
-  reduce_diskspace: |
-    # Optimisations pour réduire l'espace disque
-    INHERIT += "rm_work"
-    INHERIT += "rm_work_and_downloads"
+  wayland_waydroid: |
+    DISTRO_FEATURES:append = " wayland systemd"
+    DISTRO_FEATURES:remove = "x11"
+    VIRTUAL-RUNTIME_init_manager = "systemd"
+    CMDLINE:append = " psi=1"
     
-  performance: |
-    # Configuration CPU/RAM adaptée aux runners GitHub
+  waydroid_image_packages: |
+    IMAGE_INSTALL:append = " \
+        waydroid-setup \
+        python3 \
+        python3-pip \
+        lxc \
+        iptables \
+        dnsmasq \
+        weston \
+        weston-init \
+        curl \
+        ca-certificates \
+        lsb-release \
+    "
+    
+  disk_optimization: |
+    INHERIT += "rm_work"
+    BB_GENERATE_MIRROR_TARBALLS = "0"
+    
+  build_performance: |
     BB_NUMBER_THREADS ?= "2"
     PARALLEL_MAKE ?= "-j 2"
     
-  paths: |
-    # Chemins de cache pour réutilisation
+  cache_paths: |
     DL_DIR = "${TOPDIR}/downloads"
     SSTATE_DIR = "${TOPDIR}/sstate-cache"
     
-  image_optimization: |
-    # Formats d'image minimaux
-    IMAGE_FSTYPES = "wic.bz2"
-    
-    # Désactiver génération de tarballs miroir
-    BB_GENERATE_MIRROR_TARBALLS = "0"
-    
-    # Nettoyage agressif
-    INHERIT += "image-buildinfo"
-    RM_WORK_EXCLUDE = ""
-    
-  minimal_features: |
-    # Configuration minimale
-    DISTRO_FEATURES:remove = " X11 vulkan opengl ptest"
-    IMAGE_INSTALL:remove = "packagegroup-core-x11"
-    
-  raspberrypi: |
-    # Configuration Raspberry Pi minimale
+  rpi_config: |
     ENABLE_UART = "1"
-    GPU_MEM = "16"
+    GPU_MEM = "256"
+    KERNEL_IMAGETYPE = "Image"
     
-  package_management: |
-    # Gestion de paquets optimisée
+  package_config: |
     PACKAGE_CLASSES = "package_ipk"
     CONF_VERSION = "2"
+EOF
