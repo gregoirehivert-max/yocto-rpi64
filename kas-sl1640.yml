@@ -27,7 +27,7 @@ repos:
 
   meta-synaptics:
     url: "https://github.com/synaptics-astra/meta-synaptics"
-    branch: kirkstone
+    branch: kirkstone_5.15_v1.8.0
 
 local_conf_header:
   synaptics_eula: |
