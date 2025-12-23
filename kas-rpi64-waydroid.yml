@@ -1,4 +1,3 @@
-cat > kas-rpi64-waydroid.yml << 'EOF'
 header:
   version: 14
 
@@ -75,4 +74,3 @@ local_conf_header:
   package_config: |
     PACKAGE_CLASSES = "package_ipk"
     CONF_VERSION = "2"
-EOF
