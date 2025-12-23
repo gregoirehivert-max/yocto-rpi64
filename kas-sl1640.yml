@@ -1,0 +1,71 @@
+header:
+  version: 14
+
+machine: sl1640
+distro: poky
+
+target:
+  - core-image-minimal
+
+repos:
+  poky:
+    url: "https://git.yoctoproject.org/git/poky"
+    branch: kirkstone
+    layers:
+      meta:
+      meta-poky:
+      meta-yocto-bsp:
+
+  meta-openembedded:
+    url: "https://git.openembedded.org/meta-openembedded"
+    branch: kirkstone
+    layers:
+      meta-oe:
+      meta-python:
+      meta-networking:
+      meta-multimedia:
+
+  meta-synaptics:
+    url: "https://github.com/synaptics-astra/meta-synaptics"
+    branch: kirkstone
+    layers:
+      meta-syna:
+
+local_conf_header:
+  reduce_diskspace: |
+    # Optimisations espace disque
+    INHERIT += "rm_work"
+    BB_GENERATE_MIRROR_TARBALLS = "0"
+    
+  performance: |
+    # Configuration CPU/RAM
+    BB_NUMBER_THREADS ?= "2"
+    PARALLEL_MAKE ?= "-j 2"
+    
+  paths: |
+    # Chemins de cache
+    DL_DIR = "${TOPDIR}/downloads"
+    SSTATE_DIR = "${TOPDIR}/sstate-cache"
+    
+  image_config: |
+    # Format d'image
+    IMAGE_FSTYPES = "wic.bz2 tar.bz2"
+    
+  synaptics_config: |
+    # Configuration spécifique SL1640
+    MACHINE = "sl1640"
+    PREFERRED_PROVIDER_virtual/kernel = "linux-syna"
+    KERNEL_IMAGETYPE = "Image"
+    
+    # Features Synaptics
+    DISTRO_FEATURES:append = " systemd wayland vulkan"
+    DISTRO_FEATURES_BACKFILL_CONSIDERED = "sysvinit"
+    VIRTUAL-RUNTIME_init_manager = "systemd"
+    
+  package_management: |
+    PACKAGE_CLASSES = "package_ipk"
+    CONF_VERSION = "2"
+    
+  kernel_config: |
+    # Configuration kernel spécifique
+    KERNEL_FEATURES:append = " features/netfilter/netfilter.scc"
