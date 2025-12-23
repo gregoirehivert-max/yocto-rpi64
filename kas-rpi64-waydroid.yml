@@ -39,7 +39,7 @@ repos:
 
 local_conf_header:
   wayland_waydroid: |
-    DISTRO_FEATURES:append = " wayland systemd virtualization pam"
+    DISTRO_FEATURES:append = " wayland systemd virtualization pam usrmerge"
     DISTRO_FEATURES:remove = "x11"
     VIRTUAL-RUNTIME_init_manager = "systemd"
     CMDLINE:append = " psi=1"
