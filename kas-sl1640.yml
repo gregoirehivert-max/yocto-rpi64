@@ -28,8 +28,6 @@ repos:
   meta-synaptics:
     url: "https://github.com/synaptics-astra/meta-synaptics"
     branch: scarthgap_6.12_v2.0.0
-    layers:
-      meta-syna:
 
 local_conf_header:
   reduce_diskspace: |
