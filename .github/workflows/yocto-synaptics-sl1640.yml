@@ -8,6 +8,9 @@ on:
       - '.github/workflows/yocto-synaptics-sl1640.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'kas-sl1640.yml'
+      - '.github/workflows/yocto-synaptics-sl1640.yml'
   workflow_dispatch:
 
 jobs:
