@@ -54,7 +54,7 @@ jobs:
          ghcr.io/siemens/kas/kas:latest \
          build /work/kas-project.yml
     
-    -name: Fix artifact permissions for upload
+    - name: Fix artifact permissions for upload
       run: |
         sudo chmod -R 755 build || true
 
