@@ -27,42 +27,16 @@ repos:
 
   meta-synaptics:
     url: "https://github.com/synaptics-astra/meta-synaptics"
-    branch: scarthgap_6.12_v2.0.0
-    
+    branch: scarthgap
+
 local_conf_header:
-  eula: |
+  synaptics: |
     ACCEPT_SYNA_EULA = "1"
-    
-  reduce_diskspace: |
-    # Optimisations espace disque
     INHERIT += "rm_work"
     BB_GENERATE_MIRROR_TARBALLS = "0"
-    
-  performance: |
-    # Configuration CPU/RAM
     BB_NUMBER_THREADS ?= "2"
     PARALLEL_MAKE ?= "-j 2"
-    
-  paths: |
-    # Chemins de cache
     DL_DIR = "${TOPDIR}/downloads"
     SSTATE_DIR = "${TOPDIR}/sstate-cache"
-    
-  image_config: |
-    # Format d'image SPI
-    IMAGE_FSTYPES = "wic.bz2 tar.bz2"
-    
-  synaptics_config: |
-    # Configuration spécifique SL1640 spi boot
-    MACHINE = "sl1640spi"
-    PREFERRED_PROVIDER_virtual/kernel = "linux-syna"
-    KERNEL_IMAGETYPE = "Image"
-    
-    # Features Synaptics
-    DISTRO_FEATURES:append = " systemd"    
-    VIRTUAL-RUNTIME_init_manager = "systemd"
-    
-  package_management: |
     PACKAGE_CLASSES = "package_ipk"
     CONF_VERSION = "2"
-    
