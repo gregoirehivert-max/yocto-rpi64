@@ -41,7 +41,7 @@ jobs:
       run: | 
         mkdir -p downloads sstate-cache
         sudo chown -R 1000:1000 downloads sstate-cache
-        sudo chomd -R 777 downloads sstate-cache
+        sudo chmod -R 777 downloads sstate-cache
         
     - name: Build with Kas
       run: |
