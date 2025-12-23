@@ -40,16 +40,23 @@ jobs:
     - name: fix cache permissions
       run: | 
         mkdir -p downloads sstate-cache build
+        sudo chown -R 1000:1000 downloads sstate-cache build
         sudo chmod -R 777 downloads sstate-cache build
+        ls -la
         
     - name: Build with Kas
       run: |
         docker run --rm \
+         --user 1000:1000 \
          -v $(pwd):/work:rw \
          -v ${pwd}/downloads:/downloads:rw \
          -v ${pwd}/sstate-cache:/sstate-cache:rw \
          ghcr.io/siemens/kas/kas:latest \
          build /work/kas-project.yml
+    
+    -name: Fix artifact permissions for upload
+      run: |
+        sudo chmod -R 755 build || true
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
