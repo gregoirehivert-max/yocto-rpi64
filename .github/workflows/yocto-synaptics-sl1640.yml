@@ -32,39 +32,34 @@ jobs:
       uses: actions/cache@v4
       with:
         path: build-sl1640/downloads
-        key: yocto-sl1640spi-tiny-dl-${{ hashFiles('kas-sl1640.yml') }}
-        restore-keys: yocto-sl1640spi-tiny-dl-
+        key: yocto-sl1640-dl-${{ hashFiles('kas-sl1640.yml') }}
+        restore-keys: yocto-sl1640-dl-
 
     - name: Cache sstate
       uses: actions/cache@v4
       with:
         path: build-sl1640/sstate-cache
-        key: yocto-sl1640spi-tiny-sstate-${{ hashFiles('kas-sl1640.yml') }}-${{ github.run_number }}
+        key: yocto-sl1640-sstate-${{ hashFiles('kas-sl1640.yml') }}-${{ github.run_number }}
         restore-keys: |
-          yocto-sl1640spi-tiny-sstate-${{ hashFiles('kas-sl1640.yml') }}-
-          yocto-sl1640spi-tiny-sstate-
+          yocto-sl1640-sstate-${{ hashFiles('kas-sl1640.yml') }}-
+          yocto-sl1640-sstate-
 
-    - name: Build with Synaptics CROPS + Kas
+    - name: Download kas-container
       run: |
-        docker run --rm \
-          -v $(pwd):$(pwd) \
-          -e KAS_BUILD_DIR=$(pwd)/build-sl1640 \
-          -e MACHINE=sl1640spi \
-          -e ACCEPT_SYNA_EULA=1 \
-          ghcr.io/synaptics-astra/crops:1.1.0 \
-          --workdir=$(pwd) \
-          /bin/bash -c "
-            wget -O kas-container https://raw.githubusercontent.com/siemens/kas/master/kas-container && \
-            chmod +x kas-container && \
-            ./kas-container shell kas-sl1640.yml -c 'bitbake astra-tiny'
-          "
+        wget -O kas-container https://raw.githubusercontent.com/siemens/kas/master/kas-container
+        chmod +x kas-container
+
+    - name: Build SL1640 astra-tiny
+      run: |
+        export KAS_BUILD_DIR=$(pwd)/build-sl1640
+        ./kas-container build kas-sl1640.yml
 
     - name: Show build stats
       run: |
         echo "Build size:"
         du -sh build-sl1640/ || true
-        echo "Images:"
-        find build-sl1640/tmp/deploy/images/sl1640spi/ -name "*astra-tiny*" -o -name "*.wic.bz2" || true
+        echo "Artefacts:"
+        find build-sl1640/tmp/deploy/images/sl1640spi/ -type f || true
         df -h
 
     - name: Upload artifacts
@@ -72,6 +67,7 @@ jobs:
       with:
         name: sl1640spi-astra-tiny-${{ github.sha }}
         path: |
-          build-sl1640/tmp/deploy/images/sl1640spi/SYNAIMG/*
-          build-sl1640/tmp/deploy/images/sl1640spi/*astra-tiny*
+          build-sl1640/tmp/deploy/images/sl1640spi/*.wic.bz2
+          build-sl1640/tmp/deploy/images/sl1640spi/*.tar.bz2
+          build-sl1640/tmp/deploy/images/sl1640spi/Image*
         retention-days: 7
