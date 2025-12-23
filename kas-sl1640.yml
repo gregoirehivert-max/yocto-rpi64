@@ -8,26 +8,48 @@ target:
   - astra-tiny
 
 repos:
-  synaptics-sdk:
-    url: "https://github.com/synaptics-astra/sdk"
-    branch: main
+  poky:
+    url: "https://git.yoctoproject.org/git/poky"
+    branch: kirkstone
+    layers:
+      meta:
+      meta-poky:
+      meta-yocto-bsp:
+
+  meta-openembedded:
+    url: "https://git.openembedded.org/meta-openembedded"
+    branch: kirkstone
+    layers:
+      meta-oe:
+      meta-python:
+      meta-networking:
+      meta-multimedia:
+
+  meta-synaptics:
+    url: "https://github.com/synaptics-astra/meta-synaptics"
+    branch: kirkstone
 
 local_conf_header:
   synaptics_eula: |
+    # EULA obligatoire
     ACCEPT_SYNA_EULA = "1"
     
   disk_optimization: |
+    # Réduction espace disque
     INHERIT += "rm_work"
     BB_GENERATE_MIRROR_TARBALLS = "0"
     
   build_performance: |
+    # Performance adaptée GitHub Actions
     BB_NUMBER_THREADS ?= "2"
     PARALLEL_MAKE ?= "-j 2"
     
   cache_paths: |
+    # Chemins de cache
     DL_DIR = "${TOPDIR}/downloads"
     SSTATE_DIR = "${TOPDIR}/sstate-cache"
     
   package_config: |
+    # Configuration paquets
     PACKAGE_CLASSES = "package_ipk"
     CONF_VERSION = "2"
