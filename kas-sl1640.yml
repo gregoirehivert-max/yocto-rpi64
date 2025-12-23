@@ -27,6 +27,10 @@ repos:
     url: "https://github.com/synaptics-astra/meta-synaptics"
     branch: kirkstone_5.15_v1.8.0
 
+env:
+  BB_VERBOSE_LOGS: "1"
+  BUILD_LOG_VERBOSE: "true"
+  
 local_conf_header:
   parsing_threads: |
     BB_NUMBER_PARSE_THREADS = "1"
