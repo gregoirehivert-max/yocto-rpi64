@@ -30,13 +30,26 @@ repos:
     branch: scarthgap
 
 local_conf_header:
-  synaptics: |
+  synaptics_eula: |
+    # EULA Synaptics obligatoire
     ACCEPT_SYNA_EULA = "1"
+    
+  disk_optimization: |
+    # Optimisations espace disque
     INHERIT += "rm_work"
     BB_GENERATE_MIRROR_TARBALLS = "0"
+    
+  build_performance: |
+    # Optimisations performance
     BB_NUMBER_THREADS ?= "2"
     PARALLEL_MAKE ?= "-j 2"
+    
+  cache_paths: |
+    # Chemins de cache
     DL_DIR = "${TOPDIR}/downloads"
     SSTATE_DIR = "${TOPDIR}/sstate-cache"
+    
+  package_config: |
+    # Configuration paquets
     PACKAGE_CLASSES = "package_ipk"
     CONF_VERSION = "2"
