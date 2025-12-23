@@ -39,8 +39,8 @@ jobs:
 
     - name: fix cache permissions
       run: | 
-        mkdir -p downloads sstate-cache
-        sudo chmod -R 777 downloads sstate-cache
+        mkdir -p downloads sstate-cache build
+        sudo chmod -R 777 downloads sstate-cache build
         
     - name: Build with Kas
       run: |
