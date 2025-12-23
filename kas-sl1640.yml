@@ -28,8 +28,11 @@ repos:
   meta-synaptics:
     url: "https://github.com/synaptics-astra/meta-synaptics"
     branch: scarthgap_6.12_v2.0.0
-
+    
 local_conf_header:
+  machine_config: |
+    MACHINE = "sl1640"
+    
   reduce_diskspace: |
     # Optimisations espace disque
     INHERIT += "rm_work"
