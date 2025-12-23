@@ -1,13 +1,8 @@
-name: Yocto Synaptics SL1640 Kernel Build
+name: Yocto Synaptics SL1640 Astra-Tiny Build
 
 on:
   push:
     branches: [ main, develop ]
-    paths:
-      - 'kas-sl1640.yml'
-      - '.github/workflows/yocto-synaptics-sl1640.yml'
-  pull_request:
-    branches: [ main ]
     paths:
       - 'kas-sl1640.yml'
       - '.github/workflows/yocto-synaptics-sl1640.yml'
@@ -23,71 +18,60 @@ jobs:
 
     - name: Free disk space
       run: |
-        echo "Espace avant nettoyage:"
+        echo "Espace avant:"
         df -h
-        sudo rm -rf /usr/share/dotnet
-        sudo rm -rf /opt/ghc
-        sudo rm -rf /usr/local/share/boost
-        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-        sudo rm -rf /usr/local/lib/android
-        sudo rm -rf /opt/hostedtoolcache/CodeQL
-        sudo rm -rf /usr/local/.ghcup
+        sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY" /usr/local/lib/android
+        sudo rm -rf /opt/hostedtoolcache/CodeQL /usr/local/.ghcup
         sudo apt-get clean
         sudo docker image prune --all --force
-        echo "Espace après nettoyage:"
+        echo "Espace après:"
         df -h
 
-    - name: Cache Yocto downloads
+    - name: Cache downloads
       uses: actions/cache@v4
       with:
         path: build-sl1640/downloads
-        key: yocto-sl1640spi-astra-tiny-dl-${{ hashFiles('kas-sl1640.yml') }}
-        restore-keys: |
-          yocto-sl1640-astra-tiny-dl-
+        key: yocto-sl1640spi-tiny-dl-${{ hashFiles('kas-sl1640.yml') }}
+        restore-keys: yocto-sl1640spi-tiny-dl-
 
-    - name: Cache Yocto sstate
+    - name: Cache sstate
       uses: actions/cache@v4
       with:
         path: build-sl1640/sstate-cache
-        key: yocto-sl1640-astra-tiny-sstate-${{ hashFiles('kas-sl1640.yml') }}-${{ github.run_number }}
+        key: yocto-sl1640spi-tiny-sstate-${{ hashFiles('kas-sl1640.yml') }}-${{ github.run_number }}
         restore-keys: |
-          yocto-sl1640-astra-tiny-sstate-${{ hashFiles('kas-sl1640.yml') }}-
-          yocto-sl1640-astra-tiny-sstate-
+          yocto-sl1640spi-tiny-sstate-${{ hashFiles('kas-sl1640.yml') }}-
+          yocto-sl1640spi-tiny-sstate-
 
-    - name: Download kas-container
+    - name: Build with Synaptics CROPS + Kas
       run: |
-        wget -O kas-container https://raw.githubusercontent.com/siemens/kas/master/kas-container
-        chmod +x kas-container
+        docker run --rm \
+          -v $(pwd):$(pwd) \
+          -e KAS_BUILD_DIR=$(pwd)/build-sl1640 \
+          -e MACHINE=sl1640spi \
+          -e ACCEPT_SYNA_EULA=1 \
+          ghcr.io/synaptics-astra/crops:1.1.0 \
+          --workdir=$(pwd) \
+          /bin/bash -c "
+            wget -O kas-container https://raw.githubusercontent.com/siemens/kas/master/kas-container && \
+            chmod +x kas-container && \
+            ./kas-container shell kas-sl1640.yml -c 'bitbake astra-tiny'
+          "
 
-    - name: Build SL1640 SPI astra tiny kernel with kas-container
+    - name: Show build stats
       run: |
-        export KAS_BUILD_DIR=$(pwd)/build-sl1640
-        ./kas-container build kas-sl1640.yml
-
-    - name: Show build size
-      run: |
-        echo "Taille du répertoire build:"
+        echo "Build size:"
         du -sh build-sl1640/ || true
-        find build-sl1640/tmp/deploy/images/sl1640spi/ -type f -name "*astra-tiny*" || true
-        echo "Espace disque restant:"
+        echo "Images:"
+        find build-sl1640/tmp/deploy/images/sl1640spi/ -name "*astra-tiny*" -o -name "*.wic.bz2" || true
         df -h
 
-    - name: Upload kernel artifacts
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: sl1640spi-astra-tiny-${{ github.sha }}
-        path: |        
-          build-sl1640/tmp/deploy/images/sl1640spi/*astra-tiny*.wic.bz2
-          build-sl1640/tmp/deploy/images/sl1640spi/*astra-tiny*.tar.bz2
-          build-sl1640/tmp/deploy/images/sl1640spi/Image*
-          build-sl1640/tmp/deploy/images/sl1640spi/*.dtb          
+        path: |
+          build-sl1640/tmp/deploy/images/sl1640spi/SYNAIMG/*
+          build-sl1640/tmp/deploy/images/sl1640spi/*astra-tiny*
         retention-days: 7
-        compression-level: 9
-
-    - name: Upload SDK (optional)
-      if: github.ref == 'refs/heads/main'
-      uses: actions/upload-artifact@v4
-      with:
-        name: sl1640-sdk-${{ github.sha }}
-        path: build-sl1640/tmp/deploy/sdk/*.sh
-        retention-days: 14
