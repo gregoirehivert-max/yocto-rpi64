@@ -1,4 +1,3 @@
-cat > layers/meta-custom/recipes-core/waydroid-setup/waydroid-setup.bb << 'EOF'
 SUMMARY = "Waydroid setup script for Raspberry Pi"
 DESCRIPTION = "Script to install Waydroid from official repository"
 LICENSE = "MIT"
@@ -25,4 +24,3 @@ do_install() {
 }
 
 FILES:${PN} = "${bindir}/setup-waydroid"
-EOF
