@@ -39,6 +39,8 @@ repos:
 
 local_conf_header:
   wayland_waydroid: |
+    LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch"
+
     DISTRO_FEATURES:append = " wayland systemd virtualization pam usrmerge"
     DISTRO_FEATURES:remove = "x11"
     VIRTUAL-RUNTIME_init_manager = "systemd"
