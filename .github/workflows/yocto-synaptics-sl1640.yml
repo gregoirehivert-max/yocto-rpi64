@@ -41,25 +41,25 @@ jobs:
       uses: actions/cache@v4
       with:
         path: build-sl1640/downloads
-        key: yocto-sl1640-dl-${{ hashFiles('kas-sl1640.yml') }}
+        key: yocto-sl1640spi-astra-tiny-dl-${{ hashFiles('kas-sl1640.yml') }}
         restore-keys: |
-          yocto-sl1640-dl-
+          yocto-sl1640-astra-tiny-dl-
 
     - name: Cache Yocto sstate
       uses: actions/cache@v4
       with:
         path: build-sl1640/sstate-cache
-        key: yocto-sl1640-sstate-${{ hashFiles('kas-sl1640.yml') }}-${{ github.run_number }}
+        key: yocto-sl1640-astra-tiny-sstate-${{ hashFiles('kas-sl1640.yml') }}-${{ github.run_number }}
         restore-keys: |
-          yocto-sl1640-sstate-${{ hashFiles('kas-sl1640.yml') }}-
-          yocto-sl1640-sstate-
+          yocto-sl1640-astra-tiny-sstate-${{ hashFiles('kas-sl1640.yml') }}-
+          yocto-sl1640-astra-tiny-sstate-
 
     - name: Download kas-container
       run: |
         wget -O kas-container https://raw.githubusercontent.com/siemens/kas/master/kas-container
         chmod +x kas-container
 
-    - name: Build SL1640 kernel with kas-container
+    - name: Build SL1640 SPI astra tiny kernel with kas-container
       run: |
         export KAS_BUILD_DIR=$(pwd)/build-sl1640
         ./kas-container build kas-sl1640.yml
@@ -68,17 +68,19 @@ jobs:
       run: |
         echo "Taille du répertoire build:"
         du -sh build-sl1640/ || true
+        find build-sl1640/tmp/deploy/images/sl1640spi/ -type f -name "*astra-tiny*" || true
         echo "Espace disque restant:"
         df -h
 
     - name: Upload kernel artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: sl1640-kernel-${{ github.sha }}
-        path: |
-          build-sl1640/tmp/deploy/images/sl1640/Image*
-          build-sl1640/tmp/deploy/images/sl1640/*.dtb
-          build-sl1640/tmp/deploy/images/sl1640/*.wic.bz2
+        name: sl1640spi-astra-tiny-${{ github.sha }}
+        path: |        
+          build-sl1640/tmp/deploy/images/sl1640spi/*astra-tiny*.wic.bz2
+          build-sl1640/tmp/deploy/images/sl1640spi/*astra-tiny*.tar.bz2
+          build-sl1640/tmp/deploy/images/sl1640spi/Image*
+          build-sl1640/tmp/deploy/images/sl1640spi/*.dtb          
         retention-days: 7
         compression-level: 9
 
