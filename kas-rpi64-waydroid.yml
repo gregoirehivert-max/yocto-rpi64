@@ -1,0 +1,71 @@
+header:
+  version: 14
+
+machine: raspberrypi4-64
+distro: poky
+
+target:
+  - core-image-minimal
+
+repos:
+  poky:
+    url: "https://git.yoctoproject.org/git/poky"
+    branch: scarthgap
+    layers:
+      meta:
+      meta-poky:
+      meta-yocto-bsp:
+
+  meta-openembedded:
+    url: "https://git.openembedded.org/meta-openembedded"
+    branch: scarthgap
+    layers:
+      meta-oe:
+      meta-python:
+      meta-networking:
+
+  meta-raspberrypi:
+    url: "https://git.yoctoproject.org/git/meta-raspberrypi"
+    branch: scarthgap
+
+local_conf_header:
+  reduce_diskspace: |
+    # Optimisations pour réduire l'espace disque
+    INHERIT += "rm_work"
+    INHERIT += "rm_work_and_downloads"
+    
+  performance: |
+    # Configuration CPU/RAM adaptée aux runners GitHub
+    BB_NUMBER_THREADS ?= "2"
+    PARALLEL_MAKE ?= "-j 2"
+    
+  paths: |
+    # Chemins de cache pour réutilisation
+    DL_DIR = "${TOPDIR}/downloads"
+    SSTATE_DIR = "${TOPDIR}/sstate-cache"
+    
+  image_optimization: |
+    # Formats d'image minimaux
+    IMAGE_FSTYPES = "wic.bz2"
+    
+    # Désactiver génération de tarballs miroir
+    BB_GENERATE_MIRROR_TARBALLS = "0"
+    
+    # Nettoyage agressif
+    INHERIT += "image-buildinfo"
+    RM_WORK_EXCLUDE = ""
+    
+  minimal_features: |
+    # Configuration minimale
+    DISTRO_FEATURES:remove = " X11 vulkan opengl ptest"
+    IMAGE_INSTALL:remove = "packagegroup-core-x11"
+    
+  raspberrypi: |
+    # Configuration Raspberry Pi minimale
+    ENABLE_UART = "1"
+    GPU_MEM = "16"
+    
+  package_management: |
+    # Gestion de paquets optimisée
+    PACKAGE_CLASSES = "package_ipk"
+    CONF_VERSION = "2"
