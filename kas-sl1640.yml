@@ -5,7 +5,7 @@ machine: sl1640spi
 distro: poky
 
 target:
-  - astra-tiny
+  - astra-media
 
 repos:
   poky:
