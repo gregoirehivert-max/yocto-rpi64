@@ -34,20 +34,79 @@ repos:
     branch: scarthgap_6.12_v2.1.0
 
 local_conf_header:
-  all_config: |
+  optimizations: |
+    # ============================================
+    # OPTIMISATIONS ESPACE DISQUE (CRITIQUE CI/CD)
+    # ============================================
+    
+    # Suppression automatique des work directories après build
+    INHERIT += "rm_work"
+    
+    # Ne pas générer de tarballs miroir (économise beaucoup d'espace)
+    BB_GENERATE_MIRROR_TARBALLS = "0"
+    
+    # Générer des tarballs shallow (git history minimale)
+    BB_GENERATE_SHALLOW_TARBALLS = "1"
+    
+    # Limite le nombre de tâches conservées en parallèle
+    BB_NUMBER_PARSE_THREADS = "2"
+    BB_NUMBER_THREADS = "2"
+    PARALLEL_MAKE = "-j 2"
+    
+    # ============================================
+    # CACHE ET TÉLÉCHARGEMENTS
+    # ============================================
+    
+    # Répertoires de cache (peut être partagé entre builds)
+    DL_DIR = "/work/downloads"
+    SSTATE_DIR = "/work/sstate-cache"
+    
+    # Nettoyage automatique des anciens sstate (garde 30 jours max)
+    SSTATE_PRUNE_MONTHS = "1"
+    
+    # ============================================
+    # FORMAT IMAGE MINIMAL
+    # ============================================
+    
+    # Format image compact (tar.gz uniquement, pas de ext4 non compressé)
+    IMAGE_FSTYPES = "tar.gz wic.gz"
+    
+    # Compression maximale
+    IMAGE_ROOTFS_EXTRA_SPACE = "0"
+    
+    # ============================================
+    # LICENCES SYNAPTICS
+    # ============================================
+    
     ACCEPT_SYNA_EULA = "1"
     LICENSE_FLAGS_ACCEPTED:append = " commercial"
     LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch"
     LICENSE_FLAGS_ACCEPTED:append = " Synaptics-EULA"
-    DISTRO_FEATURES:append = " systemd usrmerge"
+    
+    # ============================================
+    # CONFIGURATION SYSTÈME
+    # ============================================
+    
+    DISTRO_FEATURES:append = " systemd"
     VIRTUAL-RUNTIME_init_manager = "systemd"
-    BB_NUMBER_PARSE_THREADS = "1"
-    BB_NUMBER_THREADS ?= "2"
-    PARALLEL_MAKE ?= "-j 2"
-    INHERIT += "rm_work"
-    BB_GENERATE_MIRROR_TARBALLS = "0"
-    DL_DIR = "${TOPDIR}/downloads"
-    SSTATE_DIR = "${TOPDIR}/sstate-cache"
+    
+    # ============================================
+    # MACHINE ET DISTRIBUTION
+    # ============================================
+    
     MACHINE = "sl1640spi"
     PACKAGE_CLASSES = "package_ipk"
     CONF_VERSION = "2"
+    
+    # ============================================
+    # MONITORING ESPACE DISQUE
+    # ============================================
+    
+    # Arrête le build si moins de 1GB disponible
+    BB_DISKMON_DIRS = "\
+        STOPTASKS,${TMPDIR},1G,100K \
+        STOPTASKS,${DL_DIR},1G,100K \
+        STOPTASKS,${SSTATE_DIR},1G,100K \
+        ABORT,${TMPDIR},500M,1K \
+        ABORT,${DL_DIR},500M,1K \
+        ABORT,${SSTATE_DIR},500M,1K"
