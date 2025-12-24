@@ -5,12 +5,12 @@ machine: sl1640spi
 distro: poky
 
 target:
-  - astra-media
+  - astra-tiny
 
 repos:
   poky:
     url: "https://git.yoctoproject.org/git/poky"
-    branch: kirkstone
+    branch: scarthgap
     layers:
       meta:
       meta-poky:
@@ -18,43 +18,48 @@ repos:
 
   meta-openembedded:
     url: "https://git.openembedded.org/meta-openembedded"
-    branch: kirkstone
+    branch: scarthgap
     layers:
       meta-oe:
       meta-python:
+      meta-networking:
+      meta-filesystems:
 
   meta-synaptics:
     url: "https://github.com/synaptics-astra/meta-synaptics"
-    branch: kirkstone_5.15_v1.8.0
+    branch: scarthgap_6.12_v2.1.0
 
-env:
-  BB_VERBOSE_LOGS: "1"
-  BUILD_LOG_VERBOSE: "true"
-  
 local_conf_header:
-  parsing_threads: |
-    BB_NUMBER_PARSE_THREADS = "1"
-    
-  synaptics_eula: |
-    # EULA obligatoire
+  synaptics_licenses: |
+    # Accepter EULA et licences Synaptics (OBLIGATOIRE)
     ACCEPT_SYNA_EULA = "1"
+    LICENSE_FLAGS_ACCEPTED = "commercial synaptics-killswitch"
     
-  disk_optimization: |
-    # Réduction espace disque
-    INHERIT += "rm_work"
-    BB_GENERATE_MIRROR_TARBALLS = "0"
+  system_features: |
+    # Features système (usrmerge obligatoire pour Scarthgap)
+    DISTRO_FEATURES:append = " systemd usrmerge"
+    VIRTUAL-RUNTIME_init_manager = "systemd"
     
-  build_performance: |
-    # Performance adaptée GitHub Actions
+  parsing_performance: |
+    # Réduire threads de parsing pour éviter crashes
+    BB_NUMBER_PARSE_THREADS = "1"
     BB_NUMBER_THREADS ?= "2"
     PARALLEL_MAKE ?= "-j 2"
+    
+  disk_optimization: |
+    # Optimisations espace disque GitHub Actions
+    INHERIT += "rm_work"
+    BB_GENERATE_MIRROR_TARBALLS = "0"
     
   cache_paths: |
     # Chemins de cache
     DL_DIR = "${TOPDIR}/downloads"
     SSTATE_DIR = "${TOPDIR}/sstate-cache"
     
+  synaptics_config: |
+    # Configuration SL1640 SPI boot
+    MACHINE = "sl1640spi"
+    
   package_config: |
-    # Configuration paquets
     PACKAGE_CLASSES = "package_ipk"
     CONF_VERSION = "2"
