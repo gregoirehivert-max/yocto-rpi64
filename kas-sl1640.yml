@@ -25,6 +25,10 @@ repos:
       meta-networking:
       meta-filesystems:
 
+  meta-swupdate:
+    url: "https://github.com/sbabic/meta-swupdate"
+    branch: scarthgap
+
   meta-synaptics:
     url: "https://github.com/synaptics-astra/meta-synaptics"
     branch: scarthgap_6.12_v2.1.0
