@@ -34,36 +34,35 @@ repos:
     branch: scarthgap_6.12_v2.1.0
 
 local_conf_header:
-  synaptics_licenses: |
-    # Accepter EULA et licences Synaptics (OBLIGATOIRE)
+  all_config: |
+    # EULA Synaptics (OBLIGATOIRE)
     ACCEPT_SYNA_EULA = "1"
-    LICENSE_FLAGS_ACCEPTED = "commercial synaptics-killswitch"
     
-  system_features: |
-    # Features système (usrmerge obligatoire pour Scarthgap)
+    # Licences acceptées (TOUTES les variantes Synaptics)
+    LICENSE_FLAGS_ACCEPTED:append = " commercial"
+    LICENSE_FLAGS_ACCEPTED:append = " synaptics-killswitch"
+    LICENSE_FLAGS_ACCEPTED:append = " Synaptics-EULA"
+    
+    # Features système
     DISTRO_FEATURES:append = " systemd usrmerge"
     VIRTUAL-RUNTIME_init_manager = "systemd"
     
-  parsing_performance: |
-    # Réduire threads de parsing pour éviter crashes
+    # Performance
     BB_NUMBER_PARSE_THREADS = "1"
     BB_NUMBER_THREADS ?= "2"
     PARALLEL_MAKE ?= "-j 2"
     
-  disk_optimization: |
-    # Optimisations espace disque GitHub Actions
+    # Optimisation disque
     INHERIT += "rm_work"
     BB_GENERATE_MIRROR_TARBALLS = "0"
     
-  cache_paths: |
-    # Chemins de cache
+    # Cache
     DL_DIR = "${TOPDIR}/downloads"
     SSTATE_DIR = "${TOPDIR}/sstate-cache"
     
-  synaptics_config: |
-    # Configuration SL1640 SPI boot
+    # Machine
     MACHINE = "sl1640spi"
     
-  package_config: |
+    # Package
     PACKAGE_CLASSES = "package_ipk"
     CONF_VERSION = "2"
