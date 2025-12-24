@@ -16,25 +16,24 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Free disk space
+    # LIBÉRATION D'ESPACE DISQUE (critique pour Yocto)
+    - name: Free Disk Space (Ubuntu)
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: true
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: true
+        docker-images: true
+        swap-storage: true
+      
+    - name: Check available disk space
       run: |
-        echo "Espace avant:"
+        echo "=== Disk space after cleanup ==="
         df -h
-        sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost
-        sudo rm -rf "$AGENT_TOOLSDIRECTORY" /usr/local/lib/android
-        sudo rm -rf /opt/hostedtoolcache/CodeQL /usr/local/.ghcup
-        sudo apt-get clean
-        sudo docker image prune --all --force
-        echo "Espace après:"
-        df -h
-
-    - name: Create swap space
-      run: |
-        sudo fallocate -l 8G /swapfile
-        sudo chmod 600 /swapfile
-        sudo mkswap /swapfile
-        sudo swapon /swapfile
-        free -h
+        echo "=== Available space in GB ==="
+        df -BG / | awk 'NR==2 {print $4}'
 
     - name: Cache downloads
       uses: actions/cache@v4
@@ -61,8 +60,14 @@ jobs:
       run: |
         export KAS_BUILD_DIR=$(pwd)/build-sl1640
         ./kas-container build kas-sl1640.yml
-      continue-on-error: true
-
+    # VÉRIFICATION ESPACE DISQUE PENDANT LE BUILD
+    - name: Monitor disk space during build
+      if: always()
+      run: |
+        echo "=== Disk usage after build ==="
+        df -h
+        du -sh build-* 2>/dev/null || true
+      
     - name: Show last 200 lines on failure
       if: failure()
       run: |
