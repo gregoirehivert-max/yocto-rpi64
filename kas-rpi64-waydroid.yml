@@ -45,7 +45,10 @@ local_conf_header:
     DISTRO_FEATURES:remove = "x11"
     VIRTUAL-RUNTIME_init_manager = "systemd"
     CMDLINE:append = " psi=1"
-    
+
+   # Désactiver bcm2835 userland (pas nécessaire pour Waydroid)
+    MACHINE_EXTRA_RRECOMMENDS:remove = "bcm2835"
+ 
   waydroid_image_packages: |
     IMAGE_INSTALL:append = " \
         waydroid-setup \
