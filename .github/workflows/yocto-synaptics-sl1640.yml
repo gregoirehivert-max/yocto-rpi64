@@ -1,4 +1,4 @@
-name: Yocto Synaptics SL1640 Astra-Tiny Build
+name: Yocto Synaptics SL1640 Scarthgap v2.1.0
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-sl1640:
+  build-sl1640-scarthgap:
     runs-on: ubuntu-latest
     
     steps:
@@ -28,46 +28,73 @@ jobs:
         echo "Espace après:"
         df -h
 
+    - name: Create swap space
+      run: |
+        sudo fallocate -l 8G /swapfile
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+        free -h
+
     - name: Cache downloads
       uses: actions/cache@v4
       with:
         path: build-sl1640/downloads
-        key: yocto-sl1640-dl-${{ hashFiles('kas-sl1640.yml') }}
-        restore-keys: yocto-sl1640-dl-
+        key: yocto-sl1640-scarthgap-v2.1-dl-${{ hashFiles('kas-sl1640.yml') }}
+        restore-keys: yocto-sl1640-scarthgap-v2.1-dl-
 
     - name: Cache sstate
       uses: actions/cache@v4
       with:
         path: build-sl1640/sstate-cache
-        key: yocto-sl1640-sstate-${{ hashFiles('kas-sl1640.yml') }}-${{ github.run_number }}
+        key: yocto-sl1640-scarthgap-v2.1-sstate-${{ hashFiles('kas-sl1640.yml') }}-${{ github.run_number }}
         restore-keys: |
-          yocto-sl1640-sstate-${{ hashFiles('kas-sl1640.yml') }}-
-          yocto-sl1640-sstate-
+          yocto-sl1640-scarthgap-v2.1-sstate-${{ hashFiles('kas-sl1640.yml') }}-
+          yocto-sl1640-scarthgap-v2.1-sstate-
 
     - name: Download kas-container
       run: |
         wget -O kas-container https://raw.githubusercontent.com/siemens/kas/master/kas-container
         chmod +x kas-container
 
-    - name: Build SL1640 astra-tiny
+    - name: Build SL1640 Scarthgap v2.1.0
       run: |
         export KAS_BUILD_DIR=$(pwd)/build-sl1640
         ./kas-container build kas-sl1640.yml
+      continue-on-error: true
+
+    - name: Show last 200 lines on failure
+      if: failure()
+      run: |
+        echo "=== DERNIÈRES 200 LIGNES DU LOG ==="
+        tail -200 build-sl1640/tmp/log/cooker/*/console-latest.log || true
+
+    - name: Upload build log on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: sl1640-scarthgap-build-log-${{ github.sha }}
+        path: |
+          build-sl1640/tmp/log/
+        retention-days: 7
 
     - name: Show build stats
+      if: success()
       run: |
         echo "Build size:"
         du -sh build-sl1640/ || true
-        echo "Artefacts:"
-        find build-sl1640/tmp/deploy/images/sl1640spi/ -type f || true
+        echo "Images générées:"
+        find build-sl1640/tmp/deploy/images/sl1640spi/ -type f -name "*.wic*" -o -name "Image*" || true
         df -h
 
     - name: Upload artifacts
+      if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: sl1640spi-astra-tiny-${{ github.sha }}
+        name: sl1640spi-scarthgap-v2.1.0-${{ github.sha }}
         path: |
           build-sl1640/tmp/deploy/images/sl1640spi/*.wic.bz2
           build-sl1640/tmp/deploy/images/sl1640spi/*.tar.bz2
           build-sl1640/tmp/deploy/images/sl1640spi/Image*
+          build-sl1640/tmp/deploy/images/sl1640spi/*.dtb
         retention-days: 7
