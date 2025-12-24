@@ -31,7 +31,7 @@ repos:
 
   meta-synaptics:
     url: "https://github.com/synaptics-astra/meta-synaptics"
-    branch: main
+    branch: scarthgap_6.12_v2.1.0
 
 local_conf_header:
   all_config: |
