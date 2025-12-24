@@ -38,17 +38,24 @@ repos:
     path: layers/meta-custom
 
 local_conf_header:
-  wayland_waydroid: |
+  standard_conf: |
+    # Accepter licences propriétaires
     LICENSE_FLAGS_ACCEPTED = "commercial synaptics-killswitch"
-
+    
+    # Features système
     DISTRO_FEATURES:append = " wayland systemd virtualization pam usrmerge"
     DISTRO_FEATURES:remove = "x11"
     VIRTUAL-RUNTIME_init_manager = "systemd"
     CMDLINE:append = " psi=1"
-
-   # Désactiver bcm2835 userland (pas nécessaire pour Waydroid)
+    
+    # Désactiver bcm2835 userland (pas nécessaire pour Waydroid)
     MACHINE_EXTRA_RRECOMMENDS:remove = "bcm2835"
- 
+    
+    # Configuration Raspberry Pi
+    ENABLE_UART = "1"
+    GPU_MEM = "256"
+    KERNEL_IMAGETYPE = "Image"
+    
   waydroid_image_packages: |
     IMAGE_INSTALL:append = " \
         waydroid-setup \
@@ -76,11 +83,6 @@ local_conf_header:
   cache_paths: |
     DL_DIR = "${TOPDIR}/downloads"
     SSTATE_DIR = "${TOPDIR}/sstate-cache"
-    
-  rpi_config: |
-    ENABLE_UART = "1"
-    GPU_MEM = "256"
-    KERNEL_IMAGETYPE = "Image"
     
   package_config: |
     PACKAGE_CLASSES = "package_ipk"
