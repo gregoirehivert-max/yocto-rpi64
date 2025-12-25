@@ -26,6 +26,10 @@ repos:
       meta-filesystems:
       meta-multimedia:
 
+  meta-virtualization:
+    url: "https://git.yoctoproject.org/meta-virtualization"
+    branch: scarthgap
+
   meta-swupdate:
     url: "https://github.com/sbabic/meta-swupdate"
     branch: scarthgap
