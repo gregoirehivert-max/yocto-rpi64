@@ -40,7 +40,7 @@ local_conf_header:
     # ============================================
     
     # Suppression automatique des work directories après build
-    INHERIT += "rm_work"
+    #INHERIT += "rm_work"
     
     # Ne pas générer de tarballs miroir (économise beaucoup d'espace)
     BB_GENERATE_MIRROR_TARBALLS = "0"
