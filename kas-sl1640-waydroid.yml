@@ -38,6 +38,9 @@ repos:
     url: "https://github.com/synaptics-astra/meta-synaptics"
     branch: scarthgap_6.12_v2.1.0
 
+  meta-custom:
+    path: layers/meta-custom
+
 local_conf_header:
   waydroid_image_packages: |
     IMAGE_INSTALL:append = " \
