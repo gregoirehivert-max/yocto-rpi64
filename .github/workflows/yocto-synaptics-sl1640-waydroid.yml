@@ -1,4 +1,4 @@
-name: Yocto Synaptics SL1640 Scarthgap v2.1.0
+name: Yocto Synaptics SL1640 waydroid Scarthgap v2.1.0
 
 on:
   push:
