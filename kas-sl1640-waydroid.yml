@@ -87,7 +87,7 @@ local_conf_header:
     # CONFIGURATION SYSTÈME
     # ============================================
     
-    DISTRO_FEATURES:append = " systemd wayland usrmerge"
+    DISTRO_FEATURES:append = " wayland systemd virtualization pam usrmerge"
     
     # Retirer X11, OpenGL, Wayland si non nécessaires
     DISTRO_FEATURES:remove = " x11"
