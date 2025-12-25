@@ -1,1 +1,1 @@
-tm
+IMAGE_INSTALL:append = " waydroid-setup"
