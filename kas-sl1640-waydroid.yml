@@ -39,7 +39,7 @@ repos:
     branch: scarthgap_6.12_v2.1.0
 
   meta-custom:
-    path: layers/meta-custom
+    path: layers/meta-custom-syn
 
 local_conf_header:
   waydroid_image_packages: |
