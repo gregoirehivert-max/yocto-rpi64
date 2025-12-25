@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'kas-sl1640.yml'
+      - 'kas-sl1640-waydroid.yml'
       - '.github/workflows/yocto-synaptics-sl1640-waydroid.yml'
   workflow_dispatch:
 
