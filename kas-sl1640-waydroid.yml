@@ -58,6 +58,12 @@ local_conf_header:
         lsb-release \
     "
   optimizations: |
+    # Bloquer la recette meson de meta-synaptics
+    BBMASK += "meta-synaptics/recipes-devtools/meson/"
+    
+    # Utiliser Meson >= 1.3.0 de Poky Scarthgap
+    PREFERRED_VERSION_meson-native = "1.5%"
+
     # ============================================
     # OPTIMISATIONS ESPACE DISQUE (CRITIQUE CI/CD)
     # ============================================
