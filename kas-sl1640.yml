@@ -70,9 +70,6 @@ local_conf_header:
     # Désactiver synaspiimg qui échoue
     IMAGE_FSTYPES:remove = "synaspiimg"
     
-    # Garder seulement les formats standards
-    IMAGE_FSTYPES = "tar.gz ext4"
-    
     # ... reste de la config
     # Format image compact (tar.gz uniquement, pas de ext4 non compressé)
     IMAGE_FSTYPES = "tar.gz wic.gz"
