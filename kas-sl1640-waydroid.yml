@@ -122,8 +122,8 @@ local_conf_header:
         ABORT,${DL_DIR},500M,1K \
         ABORT,${SSTATE_DIR},500M,1K"
 
- waydroid_image_packages: |
-   IMAGE_INSTALL:append = " \
+waydroid_image_packages: |
+    IMAGE_INSTALL:append = " \
         waydroid-setup \
         python3 \
         python3-pip \
