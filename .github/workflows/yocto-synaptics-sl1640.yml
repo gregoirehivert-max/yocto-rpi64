@@ -59,6 +59,7 @@ jobs:
     - name: Build SL1640 Scarthgap v2.1.0
       run: |
         export KAS_BUILD_DIR=$(pwd)/build-sl1640
+        rm -rf $(pwd)/build-sl1640
         ./kas-container build kas-sl1640.yml
     # VÉRIFICATION ESPACE DISQUE PENDANT LE BUILD
     - name: Monitor disk space during build
