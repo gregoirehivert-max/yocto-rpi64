@@ -58,12 +58,6 @@ jobs:
 
     - name: Build SL1640 Scarthgap v2.1.0
       run: |
-         # Rebuild pseudo-native explicitement
-         ./kas-container shell kas-sl1640-waydroid.yml -c 'bitbake pseudo-native -c cleansstate && bitbake pseudo-native'
-
-        # Vérifier qu'il existe
-        ./kas-container shell kas-sl1640-waydroid.yml -c 'ls -lh /work/build-sl1640/tmp/sysroots-components/x86_64/pseudo-native/usr/bin/pseudo'
-
         export KAS_BUILD_DIR=$(pwd)/build-sl1640
         ./kas-container build kas-sl1640.yml
     # VÉRIFICATION ESPACE DISQUE PENDANT LE BUILD
