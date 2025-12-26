@@ -60,6 +60,13 @@ jobs:
       run: |
         export KAS_BUILD_DIR=$(pwd)/build-sl1640
         rm -rf $(pwd)/build-sl1640
+        
+        # 2. Build pseudo d'abord
+        ./kas-container shell kas-sl1640.yml -c 'bitbake pseudo-native'
+
+        # 3. Vérifier
+        ./kas-container shell kas-sl1640.yml -c 'find /work/build-sl1640 -name pseudo -type f 2>/dev/null | grep bin/pseudo'
+
         ./kas-container build kas-sl1640.yml
     # VÉRIFICATION ESPACE DISQUE PENDANT LE BUILD
     - name: Monitor disk space during build
