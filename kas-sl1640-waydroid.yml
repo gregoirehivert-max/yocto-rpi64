@@ -79,8 +79,8 @@ local_conf_header:
     
     # Limite le nombre de tâches conservées en parallèle
     BB_NUMBER_PARSE_THREADS = "2"
-    BB_NUMBER_THREADS = "2"
-    PARALLEL_MAKE = "-j 2"
+    BB_NUMBER_THREADS = "4"
+    PARALLEL_MAKE = "-j 4"
     
     # ============================================
     # CACHE ET TÉLÉCHARGEMENTS
@@ -132,16 +132,3 @@ local_conf_header:
     MACHINE = "sl1640spi"
     PACKAGE_CLASSES = "package_ipk"
     CONF_VERSION = "2"
-    
-    # ============================================
-    # MONITORING ESPACE DISQUE
-    # ============================================
-    
-    # Arrête le build si moins de 1GB disponible
-    BB_DISKMON_DIRS = "\
-        STOPTASKS,${TMPDIR},1G,100K \
-        STOPTASKS,${DL_DIR},1G,100K \
-        STOPTASKS,${SSTATE_DIR},1G,100K \
-        ABORT,${TMPDIR},500M,1K \
-        ABORT,${DL_DIR},500M,1K \
-        ABORT,${SSTATE_DIR},500M,1K"
