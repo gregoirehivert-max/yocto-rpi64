@@ -43,7 +43,7 @@ local_conf_header:
     INHERIT += "rm_work"
 
     # Ne jamais nettoyer ces recettes natives
-RM_WORK_EXCLUDE += "pseudo-native opkg-utils-native qemu-native"
+    RM_WORK_EXCLUDE += "pseudo-native opkg-utils-native qemu-native"
 
     # Ne pas générer de tarballs miroir (économise beaucoup d'espace)
     BB_GENERATE_MIRROR_TARBALLS = "0"
